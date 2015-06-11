@@ -1,6 +1,6 @@
 # js-ray-caster
 
-A little ray casting engine in javascript. No libraries, no webGL.
+A little ray casting engine in javascript. No libraries, no webGL, no canvas draw calls except putImageData().
 
 Sprites/textures are from the base texture for [mini ludem dare #59](http://ludumdare.com/compo/minild-59/).
 
