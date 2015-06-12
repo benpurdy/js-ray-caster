@@ -2,7 +2,8 @@ var PI_OVER_180 = Math.PI / 180;
 var _180_OVER_PI = 180 / Math.PI;
 
 function randomInt(max) {
-	return Math.floor(Math.random() * max);
+	stats.counters.random++;
+	return ~~(Math.random() * max);
 }
 
 function toRadians(angle){
@@ -27,5 +28,10 @@ function angleBetween(x1,y1, x2,y2){
 }
 
 function distance(x1,y1, x2,y2){
+	stats.counters.distance++;
+	return (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
+}
+
+function distanceh(x1,y1, x2,y2){
 	return Math.sqrt( (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1) );
 }

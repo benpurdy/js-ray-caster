@@ -60,9 +60,9 @@ function generateMap() {
 
 // Get the grid index/uid for a given world-space coordinate
 function getWorld(x, y){
-	
-	var tx = Math.floor(x / GRID_SIZE);
-	var ty = Math.floor(y / GRID_SIZE);
+	stats.counters.getWorld++;
+	var tx = ~~(x / GRID_SIZE);
+	var ty = ~~(y / GRID_SIZE);
 
 	if((tx >= WORLD_STRIDE) || (ty >= WORLD_STRIDE) || (tx < 0) || (ty < 0)) {
 		return -1;
@@ -99,6 +99,7 @@ function isWalkable(tileId){
 }
 
 function isTransparent(tileId){
+	stats.counters.isTransparent++;
 	var tile = world[tileId];
 	return (tile == 56) || (tile == 57) || (tile == 58);
 }

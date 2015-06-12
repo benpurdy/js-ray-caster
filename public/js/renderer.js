@@ -23,13 +23,13 @@ function drawSprite(tileX, tileY, x, y, depth, width, height) {
 
 	for(py = startY; py < endY; py++) {
 
-		yIndex = Math.floor((py - y) / height * TILE_SIZE);
+		yIndex = ~~((py - y) / height * TILE_SIZE);
 		
 		for(px = startX; px < endX; px++) {
 			
-			xIndex = Math.floor((px - x) / width * TILE_SIZE);
+			xIndex = ~~((px - x) / width * TILE_SIZE);
 
-			bufferIndex = (px) + (( py) * VIEWPORT_WIDTH);
+			bufferIndex = (px) + ((py) * BUFFER_WIDTH);
 
 			pixelIndex = ((texX + xIndex) + (texY + yIndex) * 128);
 			
@@ -58,15 +58,15 @@ function renderSprites() {
 
 	var eyeHeight = (GRID_SIZE / 2) - playerHeight;
 
+	var cosa = Math.cos(-playerDirection);
+	var sina = Math.sin(-playerDirection);
+
 	for(var i = 0; i < sprites.length; i++) {
 		var angleToSprite = angleBetween(playerX, playerY, sprites[i].x, sprites[i].y);
 
 		var dx = Math.cos(angleToSprite) * 24 + sprites[i].x;
 		var dy = Math.sin(angleToSprite) * 24 + sprites[i].y;
-
-		var cosa = Math.cos(-playerDirection);
-		var sina = Math.sin(-playerDirection);
-
+		
 		var sx = sprites[i].x - playerX;
 		var sy = sprites[i].y - playerY;
 
@@ -79,10 +79,10 @@ function renderSprites() {
 			
 			angleToSprite = angleBetween(playerX, playerY, sx1, sy1);
 
-			var distanceToPlayer = distance(playerX, playerY, sprites[i].x, sprites[i].y);
+			var distanceToPlayer = Math.sqrt(distance(playerX, playerY, sprites[i].x, sprites[i].y));
 			
 			var correctedDist = distanceToPlayer * Math.cos(angleToSprite);
-			var viewOffsetY = Math.floor(eyeHeight / correctedDist * distanceToProjectionPlane);
+			var viewOffsetY = ~~(eyeHeight / correctedDist * distanceToProjectionPlane);
 			
 			var x = Math.cos(toRadians(-90) + angleToSprite) * distanceToPlayer;
 			
@@ -95,9 +95,9 @@ function renderSprites() {
 			drawSprite(
 				sprites[i].tileX, 
 				sprites[i].tileY, 
-				Math.floor(halfViewWidth + viewX - (projectedHeight / 2)), 
-				Math.floor(halfViewHeight - (projectedHeight / 2) - viewOffsetY), 
-				correctedDist, 
+				~~(halfViewWidth + viewX - (projectedHeight / 2)), 
+				~~(halfViewHeight - (projectedHeight / 2) - viewOffsetY), 
+				distanceToPlayer, 
 				projectedHeight, 
 				projectedHeight);
 			
@@ -142,10 +142,10 @@ function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 	var textureIndex = world[tileId];
 
 	var tileX = textureIndex % 8;
-	var tileY = Math.floor(textureIndex / 8);
+	var tileY = ~~(textureIndex / 8);
 
 	var idx = 0;
-	var texX =Math.round(Math.min((tileX * TILE_SIZE) + slice, (tileX * TILE_SIZE) + TILE_SIZE));
+	var texX = Math.round(Math.min((tileX * TILE_SIZE) + slice, (tileX * TILE_SIZE) + TILE_SIZE));
 	var texY = tileY * TILE_SIZE;
 	var pixelOffset = texX + (texY * 128);
 
@@ -160,8 +160,8 @@ function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 	var textureSample = 0;
 	while(pixel < halfHeight) {
 	
-		idx = (x + (pixel + y1) * VIEWPORT_WIDTH);
-		sampleY = Math.floor(samplesPerPixel * pixel);
+		idx = (x + (pixel + y1) * BUFFER_WIDTH);
+		sampleY = ~~(samplesPerPixel * pixel);
 		textureSample = textureLookup32[pixelOffset + (sampleY << 7)];
 		
 		if(textureSample && 0xff000000 == 0xff000000) {
@@ -169,7 +169,7 @@ function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 			depthBuffer[idx] = dist;
 		}
 
-		idx = (x + (y2 - pixel) * VIEWPORT_WIDTH);
+		idx = (x + (y2 - pixel) * BUFFER_WIDTH);
 		sampleY = (TILE_SIZE - 1) - sampleY;
 		textureSample = textureLookup32[pixelOffset + (sampleY << 7)];
 
@@ -185,8 +185,11 @@ function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 
 function castRayRecursive(originX, originY, startX, startY, angle, result, maxSteps, inBlock, isBackFace) {
 
-	var sx = Math.cos(angle);
-	var sy = Math.sin(angle);
+	stats.counters.rays++;
+
+	var cosAngle = Math.cos(angle);
+	var sinAngle = Math.sin(angle);
+	var tanAngle = Math.tan(angle);
 
 	var slice = {};
 	
@@ -228,9 +231,9 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 
 // Cast for horizontal walls
 
-	if(sy < 0) {
-		testY = Math.floor(startY / GRID_SIZE) * GRID_SIZE;
-		testX = startX - (startY - testY) / Math.tan(angle);
+	if(sinAngle < 0) {
+		testY = ~~(startY / GRID_SIZE) * GRID_SIZE;
+		testX = startX - (startY - testY) / tanAngle;
 		
 		tileTestOffsetY = isBackFace ? 32 : -32;
 
@@ -240,13 +243,13 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		invertTextureCoordsH = false;
 		faceBitsHorizontal = N;
 	} else {
-		testY = Math.floor(startY / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
-		testX = startX - (startY - testY) / Math.tan(angle);
+		testY = ~~(startY / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
+		testX = startX - (startY - testY) / tanAngle;
 		
 		tileTestOffsetY = isBackFace ? -32 : 32;
 
 		stepHY = GRID_SIZE;
-		stepHX = GRID_SIZE / Math.tan(angle);
+		stepHX = GRID_SIZE / tanAngle;
 		
 		invertTextureCoordsH = true;
 		faceBitsHorizontal = S;
@@ -276,24 +279,24 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 // Cast for vertical walls
 	
 	var tileTestOffsetX = 0;
-	if(sx < 0) {
-		testX = Math.floor(startX / GRID_SIZE) * GRID_SIZE;
-		testY = startY - (startX - testX) * Math.tan(angle);
+	if(cosAngle < 0) {
+		testX = ~~(startX / GRID_SIZE) * GRID_SIZE;
+		testY = startY - (startX - testX) * tanAngle;
 		
 		tileTestOffsetX = isBackFace ? 32 : -32;
 	
-		stepVY = -GRID_SIZE * Math.tan(angle);
+		stepVY = -GRID_SIZE * tanAngle;
 		stepVX = -GRID_SIZE;
 		invertTextureCoordsV = true;
 		faceBitsVertical = W;
 	} else {
-		testX = Math.floor(startX / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
-		testY = startY - (startX - testX) * Math.tan(angle);
+		testX = ~~(startX / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
+		testY = startY - (startX - testX) * tanAngle;
 
 		tileTestOffsetX = isBackFace ? -32 : 32;
 		
 		stepVX = GRID_SIZE;
-		stepVY = GRID_SIZE * Math.tan(angle);
+		stepVY = GRID_SIZE * tanAngle;
 		invertTextureCoordsV = false;
 		faceBitsVertical = E;
 	}
@@ -329,8 +332,9 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		vy = hy;
 
 		slice.tileId = htile;
-		slice.sampleX = (vx - Math.floor(vx / GRID_SIZE) * GRID_SIZE) / GRID_SIZE;
-		
+		slice.sampleX = (vx - ~~(vx / GRID_SIZE) * GRID_SIZE) / GRID_SIZE;
+		slice.distance = Math.sqrt(hDist);
+
 		faceBits = faceBitsHorizontal;
 
 		if(invertTextureCoordsH) {
@@ -338,9 +342,9 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		}		
 	} else {
 
-		slice.sampleX = (vy - Math.floor(vy / GRID_SIZE) * GRID_SIZE) / GRID_SIZE;
+		slice.sampleX = (vy - ~~(vy / GRID_SIZE) * GRID_SIZE) / GRID_SIZE;
 		slice.tileId = vtile;
-
+		slice.distance = Math.sqrt(vDist);
 		faceBits = faceBitsVertical;
 		
 		if(invertTextureCoordsV) {
@@ -348,10 +352,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		}
 	}	
 
-	slice.distance    = distance(originX, originY, vx, vy);
-	slice.wallType    = (vDist > hDist);
-	slice.backFace    = isBackFace;
-	slice.transparent = isTransparent(slice.tile);
+	slice.transparent = isTransparent(slice.tileId);
 
 	// Add slices to result array
   if(isBackFace){
@@ -359,12 +360,12 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
   		result.push(slice);
   	}
 	} else{
-		if(!isTransparent(slice.tileId) || ((faceBits & faceBitsFront) != 0) ) {
+		if(!slice.transparent || ((faceBits & faceBitsFront) != 0) ) {
 			result.push(slice);
 		}
 	}
 		
-	if(isTransparent(slice.tileId) && !isBackFace) {
+	if(slice.transparent && !isBackFace) {
 		// cast the back face of this transparent block
 		castRayRecursive( originX, originY, vx, vy, angle, result, maxSteps - 1, slice.tileId, true);
 
@@ -392,9 +393,9 @@ function castFloor(startY, screenX, angle) {
 	for(var y = startY; y < VIEWPORT_HEIGHT; y++) {
 		
 		paralellDistanceToFloor = (playerHeight / (y - halfViewHeight)) * distanceToProjectionPlane;
-		distanceToFloor = Math.floor(paralellDistanceToFloor / cosAngle);
+		distanceToFloor = ~~(paralellDistanceToFloor / cosAngle);
 
-		pixelIndex = (y * VIEWPORT_WIDTH) + screenX;
+		pixelIndex = (y * BUFFER_WIDTH) + screenX;
 		buffer32[pixelIndex] = floorColor;
 		depthBuffer[pixelIndex] = distanceToFloor;
 	}
@@ -411,64 +412,17 @@ function castCeiling(stopY, screenX, angle) {
 
 	for(var y = 0; y < stopY; y++) {
 		paralellDistanceToCeiling = (eyeHeight / (halfViewHeight - y)) * distanceToProjectionPlane;
-		distanceToCeiling = Math.floor(paralellDistanceToCeiling / cosAngle)+1;
+		distanceToCeiling = ~~(paralellDistanceToCeiling / cosAngle)+1;
 
-		pixelIndex = (y * VIEWPORT_WIDTH) + screenX;
+		pixelIndex = (y * BUFFER_WIDTH) + screenX;
 		buffer32[pixelIndex] = ceilingColor;
 		depthBuffer[pixelIndex] = distanceToCeiling;
 	}
 }
 
 
-function applyLighting() {
-	
-	var falloffEnd = 1000;
-	var falloffStart = 50;
-	var falloffRange = falloffEnd - falloffStart;
-	var falloffPower = 0.75;
 
-	var brightnessSteps = 16;
-
-	var fade = 0;
-
-	var r = 0;
-	var g = 0;
-	var b = 0;
-	var i;
-
-	var pixel = 0;
-	var depth = 0;
-
-	var len = buffer32.length;
-
-	// TODO: optimize. This whole routine seems clunky.
-	for(i = 0; i < len; i++) {
-
-		depth = depthBuffer[i];
-
-		if(depth > falloffStart) {
-			pixel = buffer32[i];
-
-			fade = 1 - Math.pow((Math.min(depth, falloffEnd) - falloffStart) / falloffRange, falloffPower);
-			fade = Math.floor(fade * brightnessSteps) / brightnessSteps;
-
-			// unpack
-			r = pixel & 0x000000ff;
-			g = (pixel & 0x0000ff00) >> 8;
-			b = (pixel & 0x00ff0000) >> 16;
-			
-			// darken
-			r *= fade;
-			g *= fade;
-			b *= fade;
-
-			// pack
-			buffer32[i] = 0xff000000 | r | (g << 8) | (b << 16)
-		}
-	}
-}
-
-
+// render the walls/floors
 function renderWorld() {
 
 	var step = fov / VIEWPORT_WIDTH;
@@ -507,14 +461,14 @@ function renderWorld() {
 			sliceHeight = GRID_SIZE / correctedDistance * distanceToProjectionPlane;
 			halfSlice = Math.round(sliceHeight / 2);
 
-			viewOffsetY = Math.floor(eyeHeight / correctedDistance * distanceToProjectionPlane);
+			viewOffsetY = ~~(eyeHeight / correctedDistance * distanceToProjectionPlane);
 
 			y1 = halfViewHeight - halfSlice - viewOffsetY;
 			y2 = halfViewHeight + halfSlice - 1 - viewOffsetY;
 
 			drawSlice(
 				slice.tileId, 
-				Math.floor(slice.sampleX * TILE_SIZE), 
+				~~(slice.sampleX * TILE_SIZE), 
 				i, 
 				y1,
 				y2,
@@ -542,14 +496,14 @@ function renderWorld() {
 			sliceHeight = GRID_SIZE / correctedDistance * distanceToProjectionPlane;
 			halfSlice = Math.round(sliceHeight / 2);
 
-			viewOffsetY = Math.floor(eyeHeight / correctedDistance * distanceToProjectionPlane);
+			viewOffsetY = ~~(eyeHeight / correctedDistance * distanceToProjectionPlane);
 
 			y1 = halfViewHeight - halfSlice - viewOffsetY;
 			y2 = halfViewHeight + halfSlice - 1 - viewOffsetY;
 
 			drawSlice(
 				slice.tileId, 
-				Math.floor(slice.sampleX * TILE_SIZE), 
+				~~(slice.sampleX * TILE_SIZE), 
 				VIEWPORT_WIDTH - i - 1, 
 				y1,
 				y2,
@@ -564,15 +518,4 @@ function renderWorld() {
 			}
 		}
 	}
-}
-
-// TODO: I think webGL might be a better way to render the output buffer instead
-// of using putImageData. It might even make sense to load the color and depth
-// buffers into a texture and do the lighting in a shader as well.
-function showBuffer(){
-  var displayLen = displayBuffer.length;
-	for(i = 0; i < displayLen; i++) {
-		displayBuffer[i] = buffer8[i];
-	}
-	ctx.putImageData(displayImgData, 0, 0);
 }

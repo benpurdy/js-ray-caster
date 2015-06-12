@@ -1,4 +1,5 @@
 var debug = false;
+var showStats = false;
 
 var TILE_SIZE = 16;
 var GRID_SIZE = 64;
@@ -6,48 +7,59 @@ var GRID_SIZE = 64;
 var VIEWPORT_WIDTH = 160;
 var VIEWPORT_HEIGHT = 100;
 
+// THESE MUST BE POWERS OF TWO (and must be large enough to contain viewport)
+var BUFFER_WIDTH = 256;
+var BUFFER_HEIGHT = 256;
+
 var canvasD = document.getElementById("debug");
 var ctxd = canvasD.getContext("2d");
 
 var canvas = document.getElementById("output");
-var ctx = canvas.getContext("2d");
 
-if(debug){
+if(debug) {
 	canvasD.style.display = "block";
 	canvasD.width = WORLD_STRIDE * 32;
 	canvasD.height = WORLD_STRIDE * 32;
 	document.getElementById("resources").style.display = "block";
 }
 
+if(showStats){
+	document.getElementById("status").style.display = "block";
+}
+
 var stats = {
 	frames: 0,
-	pixelFill: 0,
-	transparentRays: 0,
-	sliceCount: 0
+	counters:{
+		rays: 0,
+		distance: 0,
+		random: 0,
+		isTransparent: 0,
+		getWorld:0,
+		maxDepth:0
+	}
 };
+
+function resetStats() {
+	for(itm in stats.counters){
+		stats.counters[itm] = 0;
+	}
+}
 
 var debugLog = document.getElementById("debugLog");
 var imgTexture = document.getElementById("texture");
 
-var textureLookup = new Uint8ClampedArray(65536);
-
 var textureLookup32 = new Uint32Array(128 * 128);
 
-
-// get a reference to the imageData for the output canvas
-var displayImgData = ctx.getImageData(0,0, VIEWPORT_WIDTH, VIEWPORT_HEIGHT);
-var displayBuffer = displayImgData.data;
-
-
 // buffer for drawing.
-var buffer = new ArrayBuffer(VIEWPORT_WIDTH * VIEWPORT_HEIGHT * 4);
+var buffer = new ArrayBuffer(BUFFER_WIDTH * BUFFER_HEIGHT * 4);
 
 // two different views into the same buffer.
 var buffer32 = new Uint32Array(buffer);
 var buffer8 = new Uint8Array(buffer);
 
 // depth buffer, probably way more precision than needed.
-var depthBuffer = new Uint16Array(VIEWPORT_WIDTH * VIEWPORT_HEIGHT);
+//var dbuffer = new ArrayBuffer(BUFFER_WIDTH * BUFFER_HEIGHT * 4);
+var depthBuffer = new Float32Array(BUFFER_WIDTH * BUFFER_HEIGHT);
 
 
 // player stuff
@@ -105,7 +117,7 @@ imgTexture.addEventListener("load", function() {
 	tempContext.drawImage(currentTex, 0, 0);
 
 	var r,g,b,a;
-	textureLookup = tempContext.getImageData(0, 0, imgTexture.width, imgTexture.height).data;
+	var textureLookup = tempContext.getImageData(0, 0, imgTexture.width, imgTexture.height).data;
 	for(var i = 0; i < textureLookup32.length; i++){
 		r = textureLookup[i * 4];
 		g = textureLookup[i * 4 + 1];
@@ -115,9 +127,6 @@ imgTexture.addEventListener("load", function() {
 		textureLookup32[i] = (a<<24) | r | (g << 8) | (b << 16);
 	}
 });
-
-
-
 
 
 
@@ -188,22 +197,41 @@ function update(now) {
 			debugDrawWorld();
 		}
 		
+		var timeStamp1 = new Date().getTime();
 		updatePlayer(targetFrameTime);
+
 		renderWorld();
 		renderSprites();
-		applyLighting();
-		showBuffer();
+
+		loadColorTexture(buffer8);
+		loadDepthTexture(depthBuffer);
+
+		drawGL();
+		var timeStamp2 = new Date().getTime();
 	
-		if(debug) {
+		if(showStats) {
+			var statList = [];
+			for(itm in stats.counters){
+				statList.push(itm + ": " + stats.counters[itm]);
+			}
+			var currentFPS = (stats.frames / ((now - startTime) / 1000)).toPrecision(4);
+			statList.push("FPS: " + currentFPS);
+			statList.push("Frame time: " + (timeStamp2 - timeStamp1).toPrecision(3) + " ms");
+
 			stats.frames++;
-			document.getElementById("status").innerHTML = (stats.frames / ((now - startTime) / 1000)).toPrecision(4) + " fps";
+			
+			document.getElementById("status").innerHTML = statList.join("<br>");
+
 			if(stats.frames >= 100) {
 				startTime = now;
 				stats.frames = 0;
 			}
 		}
-		frameAccum -= targetFrameTime;
 
+		
+		
+		frameAccum -= targetFrameTime;
+		resetStats();
 	}
 	window.requestAnimationFrame(update);
 }
@@ -214,15 +242,14 @@ function init() {
 	imgTexture.src = "images/example1.png";
 	generateMap();
 
-	canvas.width = VIEWPORT_WIDTH;
-	canvas.height = VIEWPORT_HEIGHT;
-
 	if(!debug){
-		canvas.style.width="100%";		
+		var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
+		canvas.width = window.innerWidth;
+		canvas.height = ~~(canvas.width / aspect);
 	} else {
 		canvas.style.float = "right";
 	}
-
+	initGL(canvas);
 	initInputEvents();
 
 	startTime = 0;
@@ -230,3 +257,12 @@ function init() {
 }
 
 init();
+
+window.addEventListener("resize", function(){
+	if(!debug){
+		var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
+		canvas.width = window.innerWidth;
+		canvas.height = ~~(canvas.width / aspect);
+		initGL(canvas);
+	}
+	});
