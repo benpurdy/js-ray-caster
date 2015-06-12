@@ -2,6 +2,8 @@
 
 A little ray casting engine in javascript. All rasterizing is handled in javascript, webGL is used to get the pixels on the screen and apply depth-based lighting because the canvas putImageData() method is slooooowwww..
 
+[Try a live demo](https://benpurdy.github.io/js-ray-caster/public/), maybe it will work!
+
 **Keyboard controls:**
 
 	W - forward
@@ -32,3 +34,7 @@ The screen is split evenly into a 3x2 grid.
 Sprites/textures are from the base texture for [mini ludem dare #59](http://ludumdare.com/compo/minild-59/).
 
 Thanks to [this great resource](http://www.permadi.com/tutorial/raycast/) for reference about old-school raycasting techniques.
+
+[WebGL Fundamentals](http://webglfundamentals.org/) and [TWGL](http://twgljs.org/) for a great set of documentation and explaination.
+
+[Handmade Hero](https://handmadehero.org/) for inspiring DIY randomness.
