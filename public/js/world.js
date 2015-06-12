@@ -3,9 +3,28 @@ var WORLD_STRIDE = 15;
 var world = [];
 var sprites = [];
 
+
+var TILE_FLAGS_TRANSPARENT 	= 1 << 0;
+var TILE_FLAGS_WALKABLE 		= 1 << 1;
+var TILE_FLAGS_VISIBLE      = 1 << 2;
+
+var TILE_FACE_N = 1 << 0;
+var TILE_FACE_E = 1 << 1;
+var TILE_FACE_S = 1 << 2;
+var TILE_FACE_W = 1 << 3;
+
+var TILE_FACE_ALL = TILE_FACE_N + TILE_FACE_E + TILE_FACE_S + TILE_FACE_W;
+
+/*
+var tile = {
+	textureOffset : 0,	// tile index into the texture map
+  flags: 0, 					// faces, walkable, transparency, etc
+};
+*/
+
 function generateMap() {
 
-	world = [
+	var tmpWorld = [
 		40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0, 58,  0,  0,  0, 35,  0,  0,  0,  0,  0,  0,  0, 40,
@@ -24,14 +43,55 @@ function generateMap() {
 	];
 
 	// randomize edge walls for more interestingness.
-	for(var i = 0; i < WORLD_STRIDE; i++){
-		world[i] = randomInt(6) + 40;
-		world[i*WORLD_STRIDE] = randomInt(6) + 40;
-		world[i*WORLD_STRIDE+(WORLD_STRIDE-1)] = randomInt(6) + 40;
-		world[WORLD_STRIDE*(WORLD_STRIDE-1)+i] = randomInt(6) + 40;
+	for(var i = 0; i < WORLD_STRIDE; i++) {
+		tmpWorld[i] = randomInt(6) + 40;
+		tmpWorld[i*WORLD_STRIDE] = randomInt(6) + 40;
+		tmpWorld[i*WORLD_STRIDE+(WORLD_STRIDE-1)] = randomInt(6) + 40;
+		tmpWorld[WORLD_STRIDE*(WORLD_STRIDE-1)+i] = randomInt(6) + 40;
 	}
 
-	for(var i = 0; i < 20; i++){
+	for(var i = 0; i < tmpWorld.length; i++) {
+		var flags = 0;
+		
+		var frontface = 0;
+		var backface = 0;
+
+		if(tmpWorld[i] == 58){
+			flags += TILE_FLAGS_TRANSPARENT;
+			flags += TILE_FLAGS_WALKABLE;
+			flags += TILE_FLAGS_VISIBLE;
+
+			frontface += TILE_FACE_N;
+			frontface += TILE_FACE_E;
+
+			backface += TILE_FACE_S;
+			backface += TILE_FACE_W;
+			
+		} else if(tmpWorld[i] == 57){
+			flags += TILE_FLAGS_TRANSPARENT;
+			flags += TILE_FLAGS_VISIBLE;
+			
+			frontface += TILE_FACE_N;
+			frontface += TILE_FACE_S;
+			backface += TILE_FACE_N;
+			backface += TILE_FACE_S;
+		} else if(tmpWorld[i] != 0){
+			flags += TILE_FLAGS_VISIBLE;
+		}
+
+		if(tmpWorld[i] == 0){
+			flags += TILE_FLAGS_WALKABLE;
+		}
+
+		world.push( {
+			textureIndex:tmpWorld[i],
+			flags: flags,
+			frontface: frontface,
+			backface: backface
+		})
+	}
+
+	for(var i = 0; i < 20; i++) {
 		var x = 0;
 		var y = 0;
 		var found = false;
@@ -65,7 +125,7 @@ function getWorld(x, y){
 	var ty = ~~(y / GRID_SIZE);
 
 	if((tx >= WORLD_STRIDE) || (ty >= WORLD_STRIDE) || (tx < 0) || (ty < 0)) {
-		return -1;
+		return 0;
 	}
 
 	return  tx + ty * WORLD_STRIDE;
@@ -94,17 +154,16 @@ function debugDrawWorld() {
 }
 
 
-function isWalkable(tileId){
-	return (world[tileId] == 0) || (world[tileId] == 58);
+function isWalkable(tileFlags) {
+	return (tileFlags & TILE_FLAGS_WALKABLE) == TILE_FLAGS_WALKABLE;
 }
 
-function isTransparent(tileId){
+function isTransparent(tileFlags) {
 	stats.counters.isTransparent++;
-	var tile = world[tileId];
-	return (tile == 56) || (tile == 57) || (tile == 58);
+	return (tileFlags & TILE_FLAGS_TRANSPARENT) == TILE_FLAGS_TRANSPARENT;
 }
 
 // returns true if a grid square should register a hit when ray casting
-function isSolid(tileId){
-	return world[tileId] > 0;
+function isVisible(tileFlags) {
+	return (tileFlags & TILE_FLAGS_VISIBLE) == TILE_FLAGS_VISIBLE;
 }

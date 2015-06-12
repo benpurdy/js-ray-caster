@@ -44,7 +44,7 @@ function keyUp(evt){
 }
 
 function tryMove(newX, newY) {
-	if(isWalkable(getWorld(newX, newY)) ){
+	if( isWalkable(world[getWorld(newX, newY)].flags) ){
 		targetPlayerX = newX;
 		targetPlayerY = newY;
 	}

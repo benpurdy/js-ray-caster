@@ -147,10 +147,11 @@ function renderSprites() {
 
 function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 
-	var textureIndex = world[tileId];
+	//var tile = world[tileId];
 
-	var tileX = textureIndex % 8;
-	var tileY = ~~(textureIndex / 8);
+	var tile = world[tileId];
+	var tileX = tile.textureIndex % 8;
+	var tileY = ~~(tile.textureIndex / 8);
 
 	var idx = 0;
 	var texX = Math.round(Math.min((tileX * TILE_SIZE) + slice, (tileX * TILE_SIZE) + TILE_SIZE));
@@ -250,7 +251,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		stepHX = -GRID_SIZE / Math.tan(angle);
 		
 		invertTextureCoordsH = false;
-		faceBitsHorizontal = N;
+		faceBitsHorizontal = TILE_FACE_N;
 	} else {
 		testY = ~~(startY / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
 		testX = startX - (startY - testY) / tanAngle;
@@ -261,14 +262,17 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		stepHX = GRID_SIZE / tanAngle;
 		
 		invertTextureCoordsH = true;
-		faceBitsHorizontal = S;
+		faceBitsHorizontal = TILE_FACE_S;
 	}
 
 	steps = 0;
+	var tile;
 	while(!found && steps < maxSteps) {
-			tileId = getWorld(testX, testY + tileTestOffsetY);
-		
-		if( ( !isBackFace && isSolid(tileId) && (tileId != inBlock) ) ||
+		tileId = getWorld(testX, testY + tileTestOffsetY);
+		tile = world[tileId];
+		if(!tile) {
+			break;
+		} else if( ( !isBackFace && isVisible(tile.flags) && (tileId != inBlock) ) ||
 		    ( isBackFace && (tileId == inBlock) ) ) {
 				found = true;
 		} else {
@@ -297,7 +301,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		stepVY = -GRID_SIZE * tanAngle;
 		stepVX = -GRID_SIZE;
 		invertTextureCoordsV = true;
-		faceBitsVertical = W;
+		faceBitsVertical = TILE_FACE_W;
 	} else {
 		testX = ~~(startX / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
 		testY = startY - (startX - testX) * tanAngle;
@@ -307,7 +311,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		stepVX = GRID_SIZE;
 		stepVY = GRID_SIZE * tanAngle;
 		invertTextureCoordsV = false;
-		faceBitsVertical = E;
+		faceBitsVertical = TILE_FACE_E;
 	}
 
 	steps = 0;
@@ -315,7 +319,10 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 
 	while(!found && steps < maxSteps) {
 		tileId = getWorld(testX + tileTestOffsetX, testY);
-		if( ( !isBackFace && isSolid(tileId) && (tileId != inBlock) ) ||
+		tile = world[tileId];
+		if(!tile) {
+			break;
+		} else if( ( !isBackFace && isVisible(tile.flags) && (tileId != inBlock) ) ||
 		    ( isBackFace && (tileId == inBlock) ) ) {
 			found = true;
 		} else {
@@ -334,15 +341,18 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 	// Casting done, decide what to do with results
 
 	var faceBits = 0;
+	var tile = null;
 
 	// Use the closer of the two results.
 	if(vDist > hDist) {
 		vx = hx;
 		vy = hy;
 
+
 		slice.tileId = htile;
 		slice.sampleX = (vx - ~~(vx / GRID_SIZE) * GRID_SIZE) / GRID_SIZE;
 		slice.distance = Math.sqrt(hDist);
+		tile = world[slice.tileId];
 
 		faceBits = faceBitsHorizontal;
 
@@ -355,21 +365,22 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		slice.tileId = vtile;
 		slice.distance = Math.sqrt(vDist);
 		faceBits = faceBitsVertical;
-		
+		tile = world[slice.tileId];
+
 		if(invertTextureCoordsV) {
 			slice.sampleX = 1.0 - slice.sampleX;
 		}
 	}	
 
-	slice.transparent = isTransparent(slice.tileId);
+	slice.transparent = isTransparent(tile.flags);
 
 	// Add slices to result array
   if(isBackFace){
-  	if((faceBits & faceBitsBack) != 0) {
+  	if((faceBits & tile.backface) != 0) {
   		result.push(slice);
   	}
 	} else{
-		if(!slice.transparent || ((faceBits & faceBitsFront) != 0) ) {
+		if(!slice.transparent || ((faceBits & tile.frontface) != 0) ) {
 			result.push(slice);
 		}
 	}
