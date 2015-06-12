@@ -5,10 +5,10 @@ function drawSprite(tileX, tileY, x, y, depth, width, height) {
 	var texY = (tileY * TILE_SIZE);
 
 	var startX = constrain(x, 0, VIEWPORT_WIDTH - 1);
-	var endX = constrain(Math.ceil(x + width), 0, VIEWPORT_WIDTH - 1);
+	var endX = constrain(~~(x + width), 0, VIEWPORT_WIDTH - 1);
 
 	var startY = constrain(y, 0, VIEWPORT_HEIGHT - 1);
-	var endY = constrain(Math.ceil(y + height), 0, VIEWPORT_HEIGHT - 1);
+	var endY = constrain(~~(y + height ), 0, VIEWPORT_HEIGHT - 1);
 	
 	var px = 0;
 	var py = 0;
@@ -18,6 +18,7 @@ function drawSprite(tileX, tileY, x, y, depth, width, height) {
 
 	var pixelIndex = 0;
 	var bufferIndex = 0;
+	var textureSample = 0;
 
 	// TODO: this routine sucks. scaling jumps all over the place.
 
@@ -31,10 +32,10 @@ function drawSprite(tileX, tileY, x, y, depth, width, height) {
 
 			bufferIndex = (px) + ((py) * BUFFER_WIDTH);
 
-			pixelIndex = ((texX + xIndex) + (texY + yIndex) * 128);
+			textureSample = textureLookup32[((texX + xIndex) + (texY + yIndex) * 128)];
 			
-			if((depthBuffer[bufferIndex] > depth) && ((textureLookup32[pixelIndex] & 0xff000000) != 0)){
-				buffer32[bufferIndex] = textureLookup32[pixelIndex];
+			if((depthBuffer[bufferIndex] > depth) && ((textureSample & 0xff000000) != 0)){
+				buffer32[bufferIndex] = textureSample;
 				depthBuffer[bufferIndex] = depth;
 			}
 		}
@@ -84,19 +85,26 @@ function renderSprites() {
 			var correctedDist = distanceToPlayer * Math.cos(angleToSprite);
 			var viewOffsetY = ~~(eyeHeight / correctedDist * distanceToProjectionPlane);
 			
-			var x = Math.cos(toRadians(-90) + angleToSprite) * distanceToPlayer;
+			var x = Math.cos(-HALF_PI + angleToSprite) * distanceToPlayer;
 			
 			var viewX = x / correctedDist * distanceToProjectionPlane;
 
 			var spriteHeight = GRID_SIZE;
 
-			var projectedHeight = 2 * (spriteHeight / 2) / correctedDist * distanceToProjectionPlane;
+			var projectedHeight = spriteHeight / correctedDist * distanceToProjectionPlane;
+
+			projectedHeight = ~~(projectedHeight / 2 + 0.5) * 2 + 1;
+
+			var screenX = ~~(halfViewWidth + viewX - (projectedHeight / 2));
+			var screenY = ~~(halfViewHeight - (projectedHeight / 2) - viewOffsetY);
 
 			drawSprite(
 				sprites[i].tileX, 
 				sprites[i].tileY, 
-				~~(halfViewWidth + viewX - (projectedHeight / 2)), 
-				~~(halfViewHeight - (projectedHeight / 2) - viewOffsetY), 
+
+				screenX, 
+				screenY, 
+				
 				distanceToPlayer, 
 				projectedHeight, 
 				projectedHeight);
@@ -158,6 +166,7 @@ function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 	var halfHeight = height / 2;
 
 	var textureSample = 0;
+
 	while(pixel < halfHeight) {
 	
 		idx = (x + (pixel + y1) * BUFFER_WIDTH);
@@ -412,7 +421,7 @@ function castCeiling(stopY, screenX, angle) {
 
 	for(var y = 0; y < stopY; y++) {
 		paralellDistanceToCeiling = (eyeHeight / (halfViewHeight - y)) * distanceToProjectionPlane;
-		distanceToCeiling = ~~(paralellDistanceToCeiling / cosAngle)+1;
+		distanceToCeiling = ~~(paralellDistanceToCeiling / cosAngle);
 
 		pixelIndex = (y * BUFFER_WIDTH) + screenX;
 		buffer32[pixelIndex] = ceilingColor;

@@ -1,5 +1,6 @@
 var PI_OVER_180 = Math.PI / 180;
 var _180_OVER_PI = 180 / Math.PI;
+var HALF_PI = Math.PI / 2;
 
 function randomInt(max) {
 	stats.counters.random++;

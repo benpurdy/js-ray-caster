@@ -1,8 +1,8 @@
 var gl;
 var bufferTexture;
 var depthTexture;
-var render;
 var shader = {};
+
 var screenGeometry = {
 	uvs: null,
 	verts: null
