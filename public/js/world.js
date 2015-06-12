@@ -3,7 +3,6 @@ var WORLD_STRIDE = 15;
 var world = [];
 var sprites = [];
 
-
 var TILE_FLAGS_TRANSPARENT 	= 1 << 0;
 var TILE_FLAGS_WALKABLE 		= 1 << 1;
 var TILE_FLAGS_VISIBLE      = 1 << 2;
@@ -15,12 +14,6 @@ var TILE_FACE_W = 1 << 3;
 
 var TILE_FACE_ALL = TILE_FACE_N + TILE_FACE_E + TILE_FACE_S + TILE_FACE_W;
 
-/*
-var tile = {
-	textureOffset : 0,	// tile index into the texture map
-  flags: 0, 					// faces, walkable, transparency, etc
-};
-*/
 
 function generateMap() {
 
@@ -50,37 +43,58 @@ function generateMap() {
 		tmpWorld[WORLD_STRIDE*(WORLD_STRIDE-1)+i] = randomInt(6) + 40;
 	}
 
+
+	// Placeholder until there's an editor.. convert the tile indeces into 
+	// actual tile data.
 	for(var i = 0; i < tmpWorld.length; i++) {
 		var flags = 0;
 		
 		var frontface = 0;
 		var backface = 0;
 
-		if(tmpWorld[i] == 58){
-			flags += TILE_FLAGS_TRANSPARENT;
-			flags += TILE_FLAGS_WALKABLE;
-			flags += TILE_FLAGS_VISIBLE;
+		if(tmpWorld[i] == 58) { // Vines
+			flags |= TILE_FLAGS_TRANSPARENT;
+			flags |= TILE_FLAGS_WALKABLE;
+			flags |= TILE_FLAGS_VISIBLE;
 
-			frontface += TILE_FACE_N;
-			frontface += TILE_FACE_E;
+			// assign a random face to be visible.
+			var f1, f1;
+			switch(randomInt(4)){
+				case 0:
+					f1 = TILE_FACE_S;
+					f2 = TILE_FACE_N;
+				break;
+					case 1:
+					f1 = TILE_FACE_N;
+					f2 = TILE_FACE_S;
+				break;
+				case 2:
+					f1 = TILE_FACE_E;
+					f2 = TILE_FACE_W;
+				break;
+				case 3:
+					f1 = TILE_FACE_W;
+					f2 = TILE_FACE_E;
+				break;
+			}
 
-			backface += TILE_FACE_S;
-			backface += TILE_FACE_W;
+			frontface |= f1;
+			backface |= f2;
 			
-		} else if(tmpWorld[i] == 57){
+		} else if(tmpWorld[i] == 57) { // Fence
 			flags += TILE_FLAGS_TRANSPARENT;
 			flags += TILE_FLAGS_VISIBLE;
 			
-			frontface += TILE_FACE_N;
-			frontface += TILE_FACE_S;
-			backface += TILE_FACE_N;
-			backface += TILE_FACE_S;
-		} else if(tmpWorld[i] != 0){
-			flags += TILE_FLAGS_VISIBLE;
+			frontface |= TILE_FACE_N;
+			frontface |= TILE_FACE_S;
+			backface |= TILE_FACE_N;
+			backface |= TILE_FACE_S;
+		} else if(tmpWorld[i] != 0) { // Flag all other non-empty tiles as visible.
+			flags |= TILE_FLAGS_VISIBLE;
 		}
 
-		if(tmpWorld[i] == 0){
-			flags += TILE_FLAGS_WALKABLE;
+		if(tmpWorld[i] == 0) { // make empty spaces walkable.
+			flags |= TILE_FLAGS_WALKABLE;
 		}
 
 		world.push( {
@@ -163,7 +177,8 @@ function isTransparent(tileFlags) {
 	return (tileFlags & TILE_FLAGS_TRANSPARENT) == TILE_FLAGS_TRANSPARENT;
 }
 
-// returns true if a grid square should register a hit when ray casting
+// returns true if a grid square should register a hit when ray casting, it 
+// still might not DRAW anything but it has the opportunity to...
 function isVisible(tileFlags) {
 	return (tileFlags & TILE_FLAGS_VISIBLE) == TILE_FLAGS_VISIBLE;
 }
