@@ -240,7 +240,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		stepHY = -GRID_SIZE;
 		stepHX = -GRID_SIZE / Math.tan(angle);
 		
-		invertTextureCoordsH = false;
+		invertTextureCoordsH = isBackFace;
 		faceBitsHorizontal = TILE_FACE_N;
 	} else {
 		testY = ~~(startY / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
@@ -251,7 +251,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		stepHY = GRID_SIZE;
 		stepHX = GRID_SIZE / tanAngle;
 		
-		invertTextureCoordsH = true;
+		invertTextureCoordsH = !isBackFace;
 		faceBitsHorizontal = TILE_FACE_S;
 	}
 
@@ -290,7 +290,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 	
 		stepVY = -GRID_SIZE * tanAngle;
 		stepVX = -GRID_SIZE;
-		invertTextureCoordsV = true;
+		invertTextureCoordsV = !isBackFace;
 		faceBitsVertical = TILE_FACE_W;
 	} else {
 		testX = ~~(startX / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
@@ -300,7 +300,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		
 		stepVX = GRID_SIZE;
 		stepVY = GRID_SIZE * tanAngle;
-		invertTextureCoordsV = false;
+		invertTextureCoordsV = isBackFace;
 		faceBitsVertical = TILE_FACE_E;
 	}
 
