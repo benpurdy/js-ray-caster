@@ -148,7 +148,7 @@ function renderSprites() {
 function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 
 	//var tile = world[tileId];
-
+	stats.counters.slices++;
 	var tile = world[tileId];
 	var tileX = tile.textureIndex % 8;
 	var tileY = ~~(tile.textureIndex / 8);
@@ -193,7 +193,7 @@ function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 }
 
 
-function castRayRecursive(originX, originY, startX, startY, angle, result, maxSteps, inBlock, isBackFace) {
+function castRayRecursive(originX, originY, startX, startY, angle, result, maxSteps, inBlock, isBackFace, isStartTile) {
 
 	stats.counters.rays++;
 
@@ -218,16 +218,6 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 	var faceBitsVertical = 0;
 	var faceBitsHorizontal = 0;
 
-	// TODO: Constants, put these somewhere else.
-	var N = 1;
-	var S = 2;
-	var E = 4;
-	var W = 8;
-
-	// TODO: Store in world data so these properties can be set per-tile.
-	var faceBitsFront = N | E | 0 | 0;
-	var faceBitsBack  = 0 | 0 | S | W;
-
 	var insideBlock = (inBlock != null);
 
 	var stepHX;
@@ -245,7 +235,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		testY = ~~(startY / GRID_SIZE) * GRID_SIZE;
 		testX = startX - (startY - testY) / tanAngle;
 		
-		tileTestOffsetY = isBackFace ? 32 : -32;
+		tileTestOffsetY = isBackFace ? 1 : -1;
 
 		stepHY = -GRID_SIZE;
 		stepHX = -GRID_SIZE / Math.tan(angle);
@@ -256,7 +246,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		testY = ~~(startY / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
 		testX = startX - (startY - testY) / tanAngle;
 		
-		tileTestOffsetY = isBackFace ? -32 : 32;
+		tileTestOffsetY = isBackFace ? -1 : 1;
 
 		stepHY = GRID_SIZE;
 		stepHX = GRID_SIZE / tanAngle;
@@ -296,7 +286,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		testX = ~~(startX / GRID_SIZE) * GRID_SIZE;
 		testY = startY - (startX - testX) * tanAngle;
 		
-		tileTestOffsetX = isBackFace ? 32 : -32;
+		tileTestOffsetX = isBackFace ? 1 : -1;
 	
 		stepVY = -GRID_SIZE * tanAngle;
 		stepVX = -GRID_SIZE;
@@ -306,7 +296,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		testX = ~~(startX / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
 		testY = startY - (startX - testX) * tanAngle;
 
-		tileTestOffsetX = isBackFace ? -32 : 32;
+		tileTestOffsetX = isBackFace ? -1 : 1;
 		
 		stepVX = GRID_SIZE;
 		stepVY = GRID_SIZE * tanAngle;
@@ -375,7 +365,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 	slice.transparent = isTransparent(tile.flags);
 
 	// Add slices to result array
-  if(isBackFace){
+  if(isBackFace) {
   	if((faceBits & tile.backface) != 0) {
   		result.push(slice);
   	}
@@ -388,7 +378,6 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 	if(slice.transparent && !isBackFace) {
 		// cast the back face of this transparent block
 		castRayRecursive( originX, originY, vx, vy, angle, result, maxSteps - 1, slice.tileId, true);
-
 		// cast on to find the next wall.
 		castRayRecursive( originX, originY, vx, vy, angle, result, maxSteps - 1, slice.tileId, false);
 	}
@@ -465,13 +454,31 @@ function renderWorld() {
 	var slice;
 	var r;
 
+	var offsetPlayerX = playerX;
+	var offsetPlayerY = playerY;
+	offsetPlayerX -= Math.cos(playerDirection) * 30;
+	offsetPlayerY -= Math.sin(playerDirection) * 30;
+
+
+	var currentTileId = getWorld(offsetPlayerX, offsetPlayerY);
+	var playerTile = world[currentTileId];
+	var playerInBlock = isTransparent(playerTile.flags);
+	if(!playerInBlock){
+		currentTileId = null;
+	}
+	stats.playerInBlock = playerInBlock;
+
 	for(i = 0; i < halfViewWidth; i++) {
 
 		// Left side to middle
 
 		result.length = 0;
 
-		castRayRecursive(playerX, playerY, playerX, playerY, start + (i * step), result, 64 );
+		if(playerInBlock){
+			castRayRecursive(offsetPlayerX, offsetPlayerY, offsetPlayerX, offsetPlayerY, start + (i * step), result, 32, currentTileId, playerInBlock);
+		}
+
+		castRayRecursive(offsetPlayerX, offsetPlayerY, offsetPlayerX, offsetPlayerY, start + (i * step), result, 32);
 
 		for(r = result.length-1; r >= 0; r--) {
 			
@@ -506,7 +513,12 @@ function renderWorld() {
 		// Right side to middle
 
 		result.length = 0;
-		castRayRecursive(playerX, playerY, playerX, playerY, stop - (i * step), result, 32 );
+
+		if(playerInBlock){
+			castRayRecursive(offsetPlayerX, offsetPlayerY, offsetPlayerX, offsetPlayerY, stop - (i * step), result, 32, currentTileId, playerInBlock);
+		}
+
+		castRayRecursive(offsetPlayerX, offsetPlayerY, offsetPlayerX, offsetPlayerY, stop - (i * step), result, 32 );
 
 		for(r = result.length-1; r >= 0; r--) {
 		

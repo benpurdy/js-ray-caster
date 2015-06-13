@@ -3,7 +3,6 @@ var _180_OVER_PI = 180 / Math.PI;
 var HALF_PI = Math.PI / 2;
 
 function randomInt(max) {
-	stats.counters.random++;
 	return ~~(Math.random() * max);
 }
 
@@ -29,6 +28,5 @@ function angleBetween(x1,y1, x2,y2){
 }
 
 function distance(x1,y1, x2,y2){
-	stats.counters.distance++;
 	return (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
 }

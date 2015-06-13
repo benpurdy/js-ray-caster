@@ -29,13 +29,13 @@ if(showStats){
 
 var stats = {
 	frames: 0,
-	counters:{
+	playerInBlock: 0,
+	counters: {
 		rays: 0,
+		slices: 0,
 		distance: 0,
-		random: 0,
 		isTransparent: 0,
-		getWorld:0,
-		maxDepth:0
+		getWorld:0
 	}
 };
 
@@ -80,7 +80,7 @@ var playerHeight = GRID_SIZE / 2;
 
 
 // view and rendering stuff
-var fov = toRadians(60);
+var fov = toRadians(70);
 var halfFov = fov / 2;
 var halfViewHeight = Math.floor(VIEWPORT_HEIGHT / 2);
 var halfViewWidth = Math.floor(VIEWPORT_WIDTH / 2);
@@ -211,6 +211,14 @@ function update(now) {
 	
 		if(showStats) {
 			var statList = [];
+
+			for(itm in stats){
+				if(itm != "counters"){
+					statList.push(itm + " = " + stats[itm]);
+				}
+			}
+			statList.push("------");
+
 			for(itm in stats.counters){
 				statList.push(itm + ": " + stats.counters[itm]);
 			}

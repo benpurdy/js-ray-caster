@@ -87,10 +87,12 @@ function generateMap() {
 			
 			frontface |= TILE_FACE_N;
 			frontface |= TILE_FACE_S;
+
 			backface |= TILE_FACE_N;
 			backface |= TILE_FACE_S;
 		} else if(tmpWorld[i] != 0) { // Flag all other non-empty tiles as visible.
 			flags |= TILE_FLAGS_VISIBLE;
+			frontface = TILE_FACE_ALL;
 		}
 
 		if(tmpWorld[i] == 0) { // make empty spaces walkable.
@@ -100,6 +102,7 @@ function generateMap() {
 		world.push( {
 			textureIndex:tmpWorld[i],
 			flags: flags,
+			walkableface: frontface,
 			frontface: frontface,
 			backface: backface
 		})
@@ -155,7 +158,7 @@ function debugDrawWorld() {
 	for(var y = 0; y < WORLD_STRIDE; y++){
 		for(var x = 0; x < WORLD_STRIDE; x++){
 			var tileId = x + y * WORLD_STRIDE;
-			if(isSolid(tileId)) {
+			if(isTransparent(world[tileId].flags)) {
 				ctxd.fillStyle = isTransparent(tileId) ? "#b0b0b0" : "#909090";
 				ctxd.fillRect(x * 32,y * 32, 32, 32);
 

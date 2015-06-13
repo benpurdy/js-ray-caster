@@ -43,11 +43,8 @@ function keyUp(evt){
 	setKey(evt.keyCode, false);
 }
 
-function tryMove(newX, newY) {
-	if( isWalkable(world[getWorld(newX, newY)].flags) ){
-		targetPlayerX = newX;
-		targetPlayerY = newY;
-	}
+function tryMove(oldX, oldY, newX, newY) {
+	return isWalkable(world[getWorld(newX, newY)].flags);
 }
 
 function turnRight(){
@@ -62,28 +59,40 @@ function straifLeft(){
 	var rads = targetPlayerDirection - toRadians(90);
 	var newX = targetPlayerX + Math.round(Math.cos(rads)) * GRID_SIZE;
 	var newY = targetPlayerY + Math.round(Math.sin(rads)) * GRID_SIZE;
-	tryMove(newX, newY);
+	if(tryMove(targetPlayerX, targetPlayerY, newX, newY)){
+		targetPlayerX = newX;
+		targetPlayerY = newY;
+	}
 }
 
 function straifRight(){
 	var rads = targetPlayerDirection + toRadians(90);
 	var newX = targetPlayerX + Math.round(Math.cos(rads)) * GRID_SIZE;
 	var newY = targetPlayerY + Math.round(Math.sin(rads)) * GRID_SIZE;
-	tryMove(newX, newY);
+	if(tryMove(targetPlayerX, targetPlayerY, newX, newY)){
+		targetPlayerX = newX;
+		targetPlayerY = newY;
+	}
 }
 
 function forward(){
 	var rads = targetPlayerDirection;
 	var newX = targetPlayerX + Math.round(Math.cos(rads)) * GRID_SIZE;
 	var newY = targetPlayerY + Math.round(Math.sin(rads)) * GRID_SIZE;
-	tryMove(newX, newY);
+	if(tryMove(targetPlayerX, targetPlayerY, newX, newY)){
+		targetPlayerX = newX;
+		targetPlayerY = newY;
+	}
 }
 
 function backward(){
 	var rads = targetPlayerDirection;
 	var newX = targetPlayerX - Math.round(Math.cos(rads)) * GRID_SIZE;
 	var newY = targetPlayerY - Math.round(Math.sin(rads)) * GRID_SIZE;
-	tryMove(newX, newY);
+	if(tryMove(targetPlayerX, targetPlayerY, newX, newY)){
+		targetPlayerX = newX;
+		targetPlayerY = newY;
+	}
 }
 
 function handleTouch(evt){
