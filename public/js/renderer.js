@@ -118,8 +118,8 @@ function renderSprites() {
 		} else 
 		{
 			if(debug) {
-				ctxd.strokeStyle = "#b0b0b0";
-				ctxd.fillStyle = "#b0b0b0";
+				ctxd.strokeStyle = "#808080";
+				ctxd.fillStyle = "#808080";
 			}
 		}
 
@@ -241,7 +241,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		stepHX = -GRID_SIZE / Math.tan(angle);
 		
 		invertTextureCoordsH = isBackFace;
-		faceBitsHorizontal = TILE_FACE_N;
+		faceBitsHorizontal = TILE_FACE_S;
 	} else {
 		testY = ~~(startY / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
 		testX = startX - (startY - testY) / tanAngle;
@@ -252,7 +252,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		stepHX = GRID_SIZE / tanAngle;
 		
 		invertTextureCoordsH = !isBackFace;
-		faceBitsHorizontal = TILE_FACE_S;
+		faceBitsHorizontal = TILE_FACE_N;
 	}
 
 	steps = 0;
@@ -291,7 +291,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		stepVY = -GRID_SIZE * tanAngle;
 		stepVX = -GRID_SIZE;
 		invertTextureCoordsV = !isBackFace;
-		faceBitsVertical = TILE_FACE_W;
+		faceBitsVertical = TILE_FACE_E;
 	} else {
 		testX = ~~(startX / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
 		testY = startY - (startX - testX) * tanAngle;
@@ -301,7 +301,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		stepVX = GRID_SIZE;
 		stepVY = GRID_SIZE * tanAngle;
 		invertTextureCoordsV = isBackFace;
-		faceBitsVertical = TILE_FACE_E;
+		faceBitsVertical = TILE_FACE_W;
 	}
 
 	steps = 0;
@@ -383,7 +383,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 	}
 
 	if(debug) {
-		ctxd.strokeStyle = isBackFace ? "rgba(0,0,255,0.75)" : "rgba(0,0,0,0.2)";
+		ctxd.strokeStyle = isBackFace ? "rgba(0,255,0,0.2)" : "rgba(0,0,0,0.2)";
 		ctxd.beginPath();
 		ctxd.moveTo(startX / 2, startY / 2);
 		ctxd.lineTo(vx / 2, vy / 2);

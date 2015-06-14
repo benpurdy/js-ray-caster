@@ -30,6 +30,7 @@ if(showStats){
 var stats = {
 	frames: 0,
 	playerInBlock: 0,
+	playerTileId:0,
 	counters: {
 		rays: 0,
 		slices: 0,
@@ -80,7 +81,7 @@ var playerHeight = GRID_SIZE / 2;
 
 
 // view and rendering stuff
-var fov = toRadians(70);
+var fov = toRadians(60);
 var halfFov = fov / 2;
 var halfViewHeight = Math.floor(VIEWPORT_HEIGHT / 2);
 var halfViewWidth = Math.floor(VIEWPORT_WIDTH / 2);
@@ -262,6 +263,15 @@ function init() {
 
 	startTime = 0;
 	update(0);
+
+
+	var a1 = new Vec2(0, 0.5);
+	var a2 = new Vec2(1, 0.5);
+
+	var b1 = new Vec2(0.5, 0);
+	var b2 = new Vec2(0.5, 1);
+
+	console.log(intersectVectors(a1,a2, b1, b2));
 }
 
 init();

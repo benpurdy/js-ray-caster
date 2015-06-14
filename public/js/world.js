@@ -22,12 +22,12 @@ function generateMap() {
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0, 58,  0,  0,  0, 35,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0, 33,  0, 33,  0, 32,  0,  0,  0,  0,  0,  0,  0, 40,
-		40,  0,  0,  0,  0,  0, 58,  0,  0,  0,  0,  0,  0,  0, 40,
-		40, 58, 33, 58, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0, 33,  0,  0,  0, 58,  0,  0,  0,  0,  0,  0,  0, 40,
+		40, 58, 33, 59, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
-		40,  0,  0,  0,  0,  0,  0, 58, 34, 57, 57, 34, 35,  0, 40,
+		40,  0,  0,  0,  0,  0,  0, 58,  0, 57, 57, 34, 35,  0, 40,
 		40,  0,  0,  0,  0,  0,  0, 33,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0, 32,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0, 34,  0,  0,  0,  0,  0,  0, 40,
@@ -51,6 +51,7 @@ function generateMap() {
 		
 		var frontface = 0;
 		var backface = 0;
+		var walkableface = 0;
 
 		if(tmpWorld[i] == 58) { // Vines
 			flags |= TILE_FLAGS_TRANSPARENT;
@@ -84,12 +85,22 @@ function generateMap() {
 		} else if(tmpWorld[i] == 57) { // Fence
 			flags += TILE_FLAGS_TRANSPARENT;
 			flags += TILE_FLAGS_VISIBLE;
+			flags |= TILE_FLAGS_WALKABLE;
 			
 			frontface |= TILE_FACE_N;
 			frontface |= TILE_FACE_S;
+			walkableface = frontface;
 
 			backface |= TILE_FACE_N;
 			backface |= TILE_FACE_S;
+		} else if(tmpWorld[i] == 59) { // Bars
+			flags += TILE_FLAGS_TRANSPARENT;
+			flags += TILE_FLAGS_VISIBLE;
+			flags |= TILE_FLAGS_WALKABLE;
+			
+			frontface |= TILE_FACE_S
+			walkableface = frontface;
+			backface |= TILE_FACE_N;
 		} else if(tmpWorld[i] != 0) { // Flag all other non-empty tiles as visible.
 			flags |= TILE_FLAGS_VISIBLE;
 			frontface = TILE_FACE_ALL;
@@ -102,7 +113,7 @@ function generateMap() {
 		world.push( {
 			textureIndex:tmpWorld[i],
 			flags: flags,
-			walkableface: frontface,
+			walkableface: walkableface,
 			frontface: frontface,
 			backface: backface
 		})
@@ -150,20 +161,60 @@ function getWorld(x, y){
 
 function debugDrawWorld() {
 
-	ctxd.fillStyle = "white";
+	ctxd.fillStyle = "#c0c0c0";
 	ctxd.strokeStyle = "black";
 
 	ctxd.fillRect(0, 0, canvasD.width, canvasD.height);
+	
+	var walls = [
+		[0,0, 1,0], // N 
+		[1,0, 1,1], // E
+		[0,1, 1,1], // S
+		[0,0, 0,1]  // W
+	];
+	var boxSize = 32;
 
-	for(var y = 0; y < WORLD_STRIDE; y++){
-		for(var x = 0; x < WORLD_STRIDE; x++){
+	for(var y = 0; y < WORLD_STRIDE; y++) {
+		for(var x = 0; x < WORLD_STRIDE; x++) {
+			
 			var tileId = x + y * WORLD_STRIDE;
-			if(isTransparent(world[tileId].flags)) {
-				ctxd.fillStyle = isTransparent(tileId) ? "#b0b0b0" : "#909090";
+			var px = x * boxSize;
+			var py = y * boxSize;
+			
+			if(isVisible(world[tileId].flags)){
+				var transparent = isTransparent(world[tileId].flags);
+				
+				
+				ctxd.fillStyle = transparent ? "#86bcca" : "#695628";
 				ctxd.fillRect(x * 32,y * 32, 32, 32);
 
-				if(!isWalkable(tileId)) {
-					ctxd.strokeRect(x * 32+1, y * 32+1, 30, 30);
+				if(transparent) {
+					ctxd.strokeStyle = "#557780";
+					ctxd.lineWidth = 2;
+					ctxd.beginPath();
+
+					ctxd.save();
+					ctxd.translate(px + boxSize/2, py + boxSize/2);
+							
+					for(var i = 0; i < walls.length; i++){
+						
+						if( (world[tileId].frontface & (1<<i)) != 0 ) {
+							ctxd.save();
+							ctxd.rotate(HALF_PI * (i-1));
+							ctxd.moveTo( boxSize/2 - 2, -boxSize/2);
+							ctxd.lineTo( boxSize/2 - 2, boxSize/2);
+							ctxd.restore();
+						}
+					}
+
+					ctxd.restore();
+					ctxd.stroke();
+					ctxd.lineWidth = 1;
+				}
+
+				if(!isWalkable(world[tileId].flags)) {
+					ctxd.strokeStyle = "#202020";
+					ctxd.strokeRect(px + 1, py + 1, 30, 30);
 				}
 			}
 		}

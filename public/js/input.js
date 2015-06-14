@@ -44,7 +44,47 @@ function keyUp(evt){
 }
 
 function tryMove(oldX, oldY, newX, newY) {
-	return isWalkable(world[getWorld(newX, newY)].flags);
+
+	var newTile = world[getWorld(newX, newY)];
+
+	if(!isWalkable(newTile.flags)){
+		return false;
+	} else {
+
+		var tx1 = ~~(oldX / GRID_SIZE);
+		var ty1 = ~~(oldY / GRID_SIZE);
+		
+		var tx2 = ~~(newX / GRID_SIZE);
+		var ty2 = ~~(newY / GRID_SIZE);
+		
+		var currentTile = world[getWorld(oldX, oldY)];
+		
+		var moveBitOutgoing = 0;
+		var moveBitIncoming = 0;
+		
+		if(tx1 < tx2) {
+			moveBitIncoming = TILE_FACE_W;
+			moveBitOutgoing = TILE_FACE_E;
+		} else if(tx1 > tx2) {
+			moveBitIncoming = TILE_FACE_E;
+			moveBitOutgoing = TILE_FACE_W;
+		}
+
+		if(ty1 < ty2) {
+			moveBitIncoming = TILE_FACE_N;
+			moveBitOutgoing = TILE_FACE_S;
+		} else if(ty1 > ty2) {
+			moveBitIncoming = TILE_FACE_S;
+			moveBitOutgoing = TILE_FACE_N;
+		}
+
+		if( ((moveBitIncoming & newTile.walkableface) != 0) || 
+			((moveBitOutgoing & currentTile.walkableface) != 0) ){
+			return false;
+		} else {
+			return true;
+		}
+	}
 }
 
 function turnRight(){
