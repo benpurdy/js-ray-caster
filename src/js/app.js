@@ -130,6 +130,12 @@ imgTexture.addEventListener("load", function() {
 });
 
 
+function debug(message){
+	if(debug) {
+		console.log(message);
+	}
+}
+
 
 
 function updatePlayer(delta) {
@@ -192,11 +198,13 @@ function update(now) {
 	// dear requestAnimationFrame, please don't go so fast.
 	while(frameAccum > targetFrameTime) {
 
+		//<debug>
 		if(debug) {
 			ctxd.fillStyle = "white";
 			ctxd.fillRect(0, 0, canvasD.width, canvasD.height);
 			debugDrawWorld();
 		}
+		//</debug>
 		
 		var timeStamp1 = new Date().getTime();
 		updatePlayer(targetFrameTime);
@@ -210,6 +218,7 @@ function update(now) {
 		drawGL();
 		var timeStamp2 = new Date().getTime();
 	
+		//<stats>
 		if(showStats) {
 			var statList = [];
 
@@ -236,51 +245,53 @@ function update(now) {
 				stats.frames = 0;
 			}
 		}
-
-		
-		
-		frameAccum -= targetFrameTime;
 		resetStats();
+		//</stats>
+
+		frameAccum -= targetFrameTime;
 	}
 	window.requestAnimationFrame(update);
 }
 
+
+function resizeViewport() {
+	//<debug>
+	if(debug) {
+		return;
+	}
+	//</debug>
+	var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
+	
+	canvas.width = window.innerWidth;
+	canvas.height = ~~(canvas.width / aspect);
+	
+	initGL(canvas);
+}
 
 function init() {
 
 	imgTexture.src = "images/example1.png";
 	generateMap();
 
-	if(!debug){
-		var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
-		canvas.width = window.innerWidth;
+	var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
+	canvas.width = window.innerWidth;
+	canvas.height = ~~(canvas.width / aspect);
+
+	//<debug>
+	if(debug)
+		canvas.width = 300;
 		canvas.height = ~~(canvas.width / aspect);
-	} else {
 		canvas.style.float = "right";
 	}
+	//</debug>
+
 	initGL(canvas);
 	initInputEvents();
 
+	window.addEventListener("resize", resizeViewport);
+
 	startTime = 0;
 	update(0);
-
-
-	var a1 = new Vec2(0, 0.5);
-	var a2 = new Vec2(1, 0.5);
-
-	var b1 = new Vec2(0.5, 0);
-	var b2 = new Vec2(0.5, 1);
-
-	console.log(intersectVectors(a1,a2, b1, b2));
 }
 
 init();
-
-window.addEventListener("resize", function(){
-	if(!debug){
-		var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
-		canvas.width = window.innerWidth;
-		canvas.height = ~~(canvas.width / aspect);
-		initGL(canvas);
-	}
-	});

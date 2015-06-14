@@ -32,11 +32,15 @@ canvas {
 }
 
 </style>
+
 <body>
 
 	<canvas id="output"></canvas>
+
+	<!-- @ifdef DEVELOPMENT -->
 	<canvas width="500" height="500" id="debug" style="display:none;"></canvas>
 	<div id="status"></div>
+	<!-- @endif -->
 
 	<div id="resources" style="display:none;">
 		<img src="" id="texture">
@@ -57,7 +61,6 @@ canvas {
 	</script>
 	 
 	<script id="fragment-shader" type="x-shader/x-fragment">
-
 	precision highp float;
 
 	varying vec2 UV;
@@ -90,13 +93,18 @@ canvas {
 	}
 
 	</script>
+	<!-- @ifdef DEVELOPMENT -->
 	<script src="js/util.js"></script>
 	<script src="js/world.js"></script>
 	<script src="js/renderer.js"></script>
 	<script src="js/input.js"></script>
 	<script src="js/gl.js"></script>
 	<script src="js/app.js"></script>
+	<!-- @endif -->
 
+	<!-- @ifdef PRODUCTION -->
+	<script src="js/app.min.js"></script>
+	<!-- @endif -->
 </body>
 
 </html>

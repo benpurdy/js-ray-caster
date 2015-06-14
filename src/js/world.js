@@ -148,7 +148,9 @@ function generateMap() {
 
 // Get the grid index/uid for a given world-space coordinate
 function getWorld(x, y){
+	//<stats>
 	stats.counters.getWorld++;
+	//</stats>
 	var tx = ~~(x / GRID_SIZE);
 	var ty = ~~(y / GRID_SIZE);
 
@@ -227,7 +229,9 @@ function isWalkable(tileFlags) {
 }
 
 function isTransparent(tileFlags) {
+	//<stats>
 	stats.counters.isTransparent++;
+	//</stats>
 	return (tileFlags & TILE_FLAGS_TRANSPARENT) == TILE_FLAGS_TRANSPARENT;
 }
 
