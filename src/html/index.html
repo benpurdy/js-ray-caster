@@ -1,110 +1,49 @@
 <html>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<style>
 
-body{
-	background: #202020;
-	margin: 0px;
-	padding: 0px;
-	color: white;
-}
-
-/** Disable filtering for the canvas **/
-canvas {
-  image-rendering: optimizeSpeed;             /* Older versions of FF          */
-  image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
-  image-rendering: -webkit-optimize-contrast; /* Safari                        */
-  image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
-  image-rendering: pixelated;                 /* Awesome future-browsers       */
-  -ms-interpolation-mode: nearest-neighbor;   /* IE                            */
-}
-
-#status{
-	position:fixed;
-	top:0px;
-	left:0px;
-	padding:10px;
-	font-family:monospace;
-	font-size:12px;
-	line-height:20px;
-	background:rgba(0,0,0,0.25);
-	display:none;
-}
-
-</style>
+<head>
+	<title></title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<link href="css/style.css" rel="stylesheet" type="text/css">
+</head>
 
 <body>
 
 	<canvas id="output"></canvas>
 
-	<!-- @ifdef DEVELOPMENT -->
+	<!-- @if CONFIG == "DEV" -->
 	<canvas width="500" height="500" id="debug" style="display:none;"></canvas>
-	<div id="status"></div>
 	<!-- @endif -->
+	<div id="status"></div>
 
 	<div id="resources" style="display:none;">
 		<img src="" id="texture">
 	</div>
 
 	<script id="vertex-shader" type="x-shader/x-vertex">
-	precision mediump float;
-
-	attribute vec2 a_position;
-	attribute vec2 a_uv;
-
-	varying vec2 UV;
-	 
-	void main() {
-		UV = a_uv;
-	  gl_Position = vec4(a_position, 0, 1);
-	}
+	<!-- @include shaders/screen.vert -->
 	</script>
 	 
 	<script id="fragment-shader" type="x-shader/x-fragment">
-	precision highp float;
-
-	varying vec2 UV;
-	
-	uniform sampler2D u_image;
-	uniform sampler2D u_depth;
-
-	const float falloffStart = 128.0;
-	const float falloffEnd = 768.0;
-	const float falloffPower = 0.8;
-	const float colorSteps = 8.0;
-	const float fogMax = 1.0;
-	const vec3 fogColor = vec3(0.0, 0.0, 0.0);
-
-	void main() {
-		
-		float depthSample = texture2D(u_depth, UV).r;
-
-		vec3 color = texture2D(u_image, UV).rgb;
-
-		depthSample = smoothstep(falloffStart, falloffEnd, depthSample);
-		depthSample = pow(depthSample, falloffPower);
-		
-		depthSample = ceil(depthSample * colorSteps) / colorSteps;
-		
-		depthSample = mix(0.0, fogMax, depthSample);
-		color = mix(color, fogColor, depthSample);
-		
-		gl_FragColor = vec4(color, 1.0);
-	}
-
+	<!-- @include shaders/screen.frag -->
 	</script>
-	<!-- @ifdef DEVELOPMENT -->
+
+	<!-- @if CONFIG == "DEV" -->
 	<script src="js/util.js"></script>
 	<script src="js/world.js"></script>
 	<script src="js/renderer.js"></script>
 	<script src="js/input.js"></script>
 	<script src="js/gl.js"></script>
+	
 	<script src="js/app.js"></script>
-	<!-- @endif -->
+	<!-- @endif-->
 
-	<!-- @ifdef PRODUCTION -->
+	<!-- @if CONFIG == "RELEASE" -->
 	<script src="js/app.min.js"></script>
 	<!-- @endif -->
+
+	<script>
+	initialize();
+	</script>
 </body>
 
 </html>

@@ -109,25 +109,21 @@ function renderSprites() {
 				projectedHeight, 
 				projectedHeight);
 			
-				//<debug>
-				if(debug){
+				// @ifdef DEBUG
 					// highlight "visible" sprites.
 					ctxd.strokeStyle = "blue";
 					ctxd.fillStyle = "blue";
-				}
-				//</debug>
+				// @endif
 
 		} else 
 		{
-			//<debug>
-			if(debug){
+			// @ifdef DEBUG
 				ctxd.strokeStyle = "#808080";
 				ctxd.fillStyle = "#808080";
-			}
-			//</debug>
+			// @endif
 		}
 
-		//<debug>
+		// @ifdef DEBUG
 		if(debug){
 			ctxd.fillRect(sprites[i].x / 2 - 2, sprites[i].y / 2-2, 4, 4);
 			ctxd.beginPath();
@@ -135,10 +131,10 @@ function renderSprites() {
 			ctxd.lineTo(dx / 2, dy / 2);
 			ctxd.stroke();
 		}
-		//</debug>
+		// @endif
 	}
 
-	//<debug>
+	// @ifdef DEBUG
 	if(debug){
 		// draw FOV clip lines
 		ctxd.strokeStyle = "#d0d0d0";
@@ -149,15 +145,15 @@ function renderSprites() {
 		ctxd.stroke();
 		ctxd.fillRect(playerX/2-1,playerY/2-1,3,3);
 	}
-	//</debug>
+	// @endif
 }
 
 
 function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 
-	//<stats>
+	// @ifdef STATS
 	stats.counters.slices++;
-	//</stats>
+	// @endif
 
 	var tile = world[tileId];
 	var tileX = tile.textureIndex % 8;
@@ -204,9 +200,9 @@ function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 
 
 function castRayRecursive(originX, originY, startX, startY, angle, result, maxSteps, inBlock, isBackFace, isStartTile) {
-	//<stats>
+	// @ifdef STATS
 	stats.counters.rays++;
-	//</stats>
+	// @endif
 	var cosAngle = Math.cos(angle);
 	var sinAngle = Math.sin(angle);
 	var tanAngle = Math.tan(angle);
@@ -392,7 +388,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		castRayRecursive( originX, originY, vx, vy, angle, result, maxSteps - 1, slice.tileId, false);
 	}
 
-	//<debug>
+	// @ifdef DEBUG
 	if(debug){
 		ctxd.strokeStyle = isBackFace ? "rgba(0,255,0,0.2)" : "rgba(0,0,0,0.2)";
 		ctxd.beginPath();
@@ -400,7 +396,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		ctxd.lineTo(vx / 2, vy / 2);
 		ctxd.stroke();
 	}
-	//</debug>
+	// @endif
 }
 
 
@@ -479,9 +475,9 @@ function renderWorld() {
 		currentTileId = null;
 	}
 	
-	//<stats>
+	// @ifdef STATS
 	stats.playerInBlock = playerInBlock;
-	//</stats>
+	// @endif
 
 	for(i = 0; i < halfViewWidth; i++) {
 

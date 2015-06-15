@@ -1,0 +1,28 @@
+body{
+	background: #202020;
+	margin: 0px;
+	padding: 0px;
+	color: white;
+}
+
+/** Disable filtering for the canvas **/
+canvas {
+  image-rendering: optimizeSpeed;             /* Older versions of FF          */
+  image-rendering: -moz-crisp-edges;          /* FF 6.0+                       */
+  image-rendering: -webkit-optimize-contrast; /* Safari                        */
+  image-rendering: -o-crisp-edges;            /* OS X & Windows Opera (12.02+) */
+  image-rendering: pixelated;                 /* Awesome future-browsers       */
+  -ms-interpolation-mode: nearest-neighbor;   /* IE                            */
+}
+
+#status{
+	position:fixed;
+	top:0px;
+	left:0px;
+	padding:10px;
+	font-family:monospace;
+	font-size:12px;
+	line-height:20px;
+	background:rgba(0,0,0,0.25);
+	display:none;
+}

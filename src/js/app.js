@@ -1,5 +1,10 @@
-var debug = false;
-var showStats = false;
+// @ifdef DEBUG
+// DEBUG MODE ENABLED
+// @endif
+
+// @ifndef DEBUG
+// production build
+// @endif
 
 var TILE_SIZE = 16;
 var GRID_SIZE = 64;
@@ -11,33 +16,26 @@ var VIEWPORT_HEIGHT = 100;
 var BUFFER_WIDTH = 256;
 var BUFFER_HEIGHT = 256;
 
-var canvasD = document.getElementById("debug");
-var ctxd = canvasD.getContext("2d");
 
 var canvas = document.getElementById("output");
 
-if(debug) {
-	canvasD.style.display = "block";
-	canvasD.width = WORLD_STRIDE * 32;
-	canvasD.height = WORLD_STRIDE * 32;
-	document.getElementById("resources").style.display = "block";
-}
+// @ifdef DEBUG
+var canvasD = document.getElementById("debug");
+var ctxd = canvasD.getContext("2d");
+canvasD.style.display = "block";
+canvasD.width = WORLD_STRIDE * 32;
+canvasD.height = WORLD_STRIDE * 32;
+document.getElementById("resources").style.display = "block";
+// @endif
 
-if(showStats){
-	document.getElementById("status").style.display = "block";
-}
+// @ifdef STATS
+document.getElementById("status").style.display = "block";
 
 var stats = {
 	frames: 0,
 	playerInBlock: 0,
 	playerTileId:0,
-	counters: {
-		rays: 0,
-		slices: 0,
-		distance: 0,
-		isTransparent: 0,
-		getWorld:0
-	}
+	counters: { }
 };
 
 function resetStats() {
@@ -45,8 +43,9 @@ function resetStats() {
 		stats.counters[itm] = 0;
 	}
 }
+// @endif
 
-var debugLog = document.getElementById("debugLog");
+//var debugLog = document.getElementById("debugLog");
 var imgTexture = document.getElementById("texture");
 
 var textureLookup32 = new Uint32Array(128 * 128);
@@ -112,7 +111,7 @@ imgTexture.addEventListener("load", function() {
 	var tempContext = tempCanvas.getContext("2d");
 
 	currentTex = imgTexture;
-	console.log("Texture loaded");
+	//console.log("Texture loaded");
 	
 	tempContext.clearRect(0, 0, imgTexture.width, imgTexture.height);
 	tempContext.drawImage(currentTex, 0, 0);
@@ -128,15 +127,6 @@ imgTexture.addEventListener("load", function() {
 		textureLookup32[i] = (a<<24) | r | (g << 8) | (b << 16);
 	}
 });
-
-
-function debug(message){
-	if(debug) {
-		console.log(message);
-	}
-}
-
-
 
 function updatePlayer(delta) {
 	
@@ -174,17 +164,6 @@ function updatePlayer(delta) {
 }
 
 
-/*
-function swapTex(){
-	if(currentTex == texA){
-		texB.src = "http://swapshop.pixelsyntax.com/api/randomImage?" + Math.random();
-	} else {
-		texA.src = "http://swapshop.pixelsyntax.com/api/randomImage?" + Math.random();
-	}
-}
-*/
-
-
 function update(now) {
 
 	delta = (now - lastTime) / 1000;
@@ -198,13 +177,13 @@ function update(now) {
 	// dear requestAnimationFrame, please don't go so fast.
 	while(frameAccum > targetFrameTime) {
 
-		//<debug>
+// @ifdef DEBUG
 		if(debug) {
 			ctxd.fillStyle = "white";
 			ctxd.fillRect(0, 0, canvasD.width, canvasD.height);
 			debugDrawWorld();
 		}
-		//</debug>
+// @endif
 		
 		var timeStamp1 = new Date().getTime();
 		updatePlayer(targetFrameTime);
@@ -214,40 +193,42 @@ function update(now) {
 
 		loadColorTexture(buffer8);
 		loadDepthTexture(depthBuffer);
+		
+// @ifdef DEBUG
+		debugDrawWorld();
+// @endif
 
 		drawGL();
 		var timeStamp2 = new Date().getTime();
 	
-		//<stats>
-		if(showStats) {
-			var statList = [];
+		// @ifdef STATS
+		var statList = [];
 
-			for(itm in stats){
-				if(itm != "counters"){
-					statList.push(itm + " = " + stats[itm]);
-				}
-			}
-			statList.push("------");
-
-			for(itm in stats.counters){
-				statList.push(itm + ": " + stats.counters[itm]);
-			}
-			var currentFPS = (stats.frames / ((now - startTime) / 1000)).toPrecision(4);
-			statList.push("FPS: " + currentFPS);
-			statList.push("Frame time: " + (timeStamp2 - timeStamp1).toPrecision(3) + " ms");
-
-			stats.frames++;
-			
-			document.getElementById("status").innerHTML = statList.join("<br>");
-
-			if(stats.frames >= 100) {
-				startTime = now;
-				stats.frames = 0;
+		for(itm in stats){
+			if(itm != "counters"){
+				statList.push(itm + " = " + stats[itm]);
 			}
 		}
-		resetStats();
-		//</stats>
+		statList.push("------");
 
+		for(itm in stats.counters){
+			statList.push(itm + ": " + stats.counters[itm]);
+		}
+		var currentFPS = (stats.frames / ((now - startTime) / 1000)).toPrecision(4);
+		statList.push("FPS: " + currentFPS);
+		statList.push("Frame time: " + (timeStamp2 - timeStamp1).toPrecision(3) + " ms");
+
+		stats.frames++;
+		
+		document.getElementById("status").innerHTML = statList.join("<br>");
+
+		if(stats.frames >= 100) {
+			startTime = now;
+			stats.frames = 0;
+		}
+		resetStats();
+		// @endif
+	
 		frameAccum -= targetFrameTime;
 	}
 	window.requestAnimationFrame(update);
@@ -255,11 +236,10 @@ function update(now) {
 
 
 function resizeViewport() {
-	//<debug>
-	if(debug) {
+	// @ifdef DEBUG
 		return;
-	}
-	//</debug>
+	// @endif
+	
 	var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
 	
 	canvas.width = window.innerWidth;
@@ -268,7 +248,7 @@ function resizeViewport() {
 	initGL(canvas);
 }
 
-function init() {
+function initialize() {
 
 	imgTexture.src = "images/example1.png";
 	generateMap();
@@ -276,14 +256,12 @@ function init() {
 	var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
 	canvas.width = window.innerWidth;
 	canvas.height = ~~(canvas.width / aspect);
-
-	//<debug>
-	if(debug)
+	
+	// @ifdef DEBUG
 		canvas.width = 300;
 		canvas.height = ~~(canvas.width / aspect);
 		canvas.style.float = "right";
-	}
-	//</debug>
+	// @endif
 
 	initGL(canvas);
 	initInputEvents();
@@ -292,6 +270,6 @@ function init() {
 
 	startTime = 0;
 	update(0);
+	
+	console.log("Initialized.");
 }
-
-init();

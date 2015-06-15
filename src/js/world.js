@@ -148,9 +148,9 @@ function generateMap() {
 
 // Get the grid index/uid for a given world-space coordinate
 function getWorld(x, y){
-	//<stats>
+	// @ifdef STATS
 	stats.counters.getWorld++;
-	//</stats>
+	// @endif
 	var tx = ~~(x / GRID_SIZE);
 	var ty = ~~(y / GRID_SIZE);
 
@@ -161,6 +161,8 @@ function getWorld(x, y){
 	return  tx + ty * WORLD_STRIDE;
 }
 
+
+// @ifdef DEBUG
 function debugDrawWorld() {
 
 	ctxd.fillStyle = "#c0c0c0";
@@ -222,16 +224,16 @@ function debugDrawWorld() {
 		}
 	}
 }
-
+// @endif
 
 function isWalkable(tileFlags) {
 	return (tileFlags & TILE_FLAGS_WALKABLE) == TILE_FLAGS_WALKABLE;
 }
 
 function isTransparent(tileFlags) {
-	//<stats>
+	// @ifdef STATS
 	stats.counters.isTransparent++;
-	//</stats>
+	// @endif
 	return (tileFlags & TILE_FLAGS_TRANSPARENT) == TILE_FLAGS_TRANSPARENT;
 }
 
