@@ -129,7 +129,8 @@ module.exports = function(grunt) {
   
 
   grunt.registerTask('dev', ['clean', 'env:dev', 'copy:prepare', 'preprocess', 'copy:finishdev']);
-
   grunt.registerTask('dist', ['clean', 'env:dist', 'copy:prepare', 'preprocess', 'uglify:dist', 'copy:finishdist']);
+
+  //grunt.
 
 };
