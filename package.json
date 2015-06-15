@@ -8,7 +8,9 @@
     "grunt-contrib-copy": "^0.8.0",
     "grunt-contrib-uglify": "^0.9.1",
     "grunt-env": "^0.4.4",
-    "grunt-preprocess": "^4.1.0"
+    "grunt-preprocess": "^4.1.0",
+    "grunt-contrib-connect": "^0.10.1",
+    "grunt-contrib-watch": "^0.10.1"
   },
   "devDependencies": {},
   "repository": {

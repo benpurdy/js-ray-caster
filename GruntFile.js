@@ -3,10 +3,6 @@ module.exports = function(grunt) {
   grunt.initConfig({
 
     env : {
-      options : {
-       //Shared Options Hash
-      },
-
       dev : {
         CONFIG : 'DEV',
         //DEBUG : true,
@@ -35,7 +31,7 @@ module.exports = function(grunt) {
     uglify: {
       dist: {
         options:{
-          sourceMap:true
+          sourceMap: true
         },
         files: {
           'public/js/app.min.js': [
@@ -49,7 +45,6 @@ module.exports = function(grunt) {
         }
       }
     },
-
 
     clean : ["build/", "public/"],
 
@@ -118,18 +113,39 @@ module.exports = function(grunt) {
         ]
       }
     },
+
+    watch: {
+      files: ['src/**/*'],
+      tasks: ['dev'],
+      options: {
+        spawn: false,
+      },
+    },
+
+    connect: {
+      server: {
+        options: {
+          port: 8080,
+          hostname: '*',
+          base: 'public/'
+        }
+      }
+    }
   });
 
-
+  
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-copy');
-  grunt.loadNpmTasks('grunt-env');
+  grunt.loadNpmTasks('grunt-contrib-connect');
+  grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-preprocess');
+  grunt.loadNpmTasks('grunt-env');
   
-
   grunt.registerTask('dev', ['clean', 'env:dev', 'copy:prepare', 'preprocess', 'copy:finishdev']);
   grunt.registerTask('dist', ['clean', 'env:dist', 'copy:prepare', 'preprocess', 'uglify:dist', 'copy:finishdist']);
+
+  grunt.registerTask('start', ['dev', 'connect', 'watch']);
 
   grunt.registerTask('default', ['dev']);
 };
