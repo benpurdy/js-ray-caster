@@ -39,9 +39,22 @@ This project uses Grunt, to install Grunt and the various Grunt related grunt st
 
 	npm install
 
-### Building
 
-There are two build types `dev` and `dist` for development mode or distribution mode. Development mode leaves all the source files un-minified and un-concatenated. Distribution mode strips out all debug messages, minifies the files, and combines them into a single .js file. The default mode is `dev` so you can build like this:
+
+### Building and Running the Game
+
+Grunt can run a web server for you, it will also watch all the files in the `src` folder and will automatically re-build the game when any file is changed. To run the provided server use the `start` command:
+
+	grunt start
+
+Then open [http://localhost:8080](http://localhost:8080) in your browser.
+
+The build process will spit out a folder called `public` which will contain the static assets needed to run the game. If you'd rather use a different web server instead of the one set up with Grunt, simply host the `public` folder somewhere and then open that server URL in a browser.
+
+
+### Building without Running the Server
+
+There are two build types `dev` and `dist` for development mode or distribution mode. Development mode leaves all the source files un-minified and un-concatenated. Distribution mode strips out all debug messages, minifies the files, and combines them into a single .js file. The default Grunt task is a `dev` build, so you can build like this:
 
 	grunt
 	
@@ -50,11 +63,6 @@ Or to do a minified 'release' build:
 	grunt dist
 	
 **IMPORTANT NOTE:** To keep things tidy, the build process will **delete** both the `public` and `build` folders each time it's run. Don't put important stuff in either of those locations!
-
-
-### Running the game
-
-The build process will spit out a folder called `public` which will contain the static assets needed to run the game. Simply host the `public` folder via any [standard HTTP server](https://github.com/indexzero/http-server) and then open that server URL in a browser.
 
 
 ### Credits/Thanks To:
