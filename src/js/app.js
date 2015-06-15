@@ -1,9 +1,5 @@
 // @ifdef DEBUG
-// DEBUG MODE ENABLED
-// @endif
-
-// @ifndef DEBUG
-// production build
+// DEBUG BUILD
 // @endif
 
 var TILE_SIZE = 16;

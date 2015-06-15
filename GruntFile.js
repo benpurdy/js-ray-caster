@@ -9,13 +9,13 @@ module.exports = function(grunt) {
 
       dev : {
         CONFIG : 'DEV',
-       // DEBUG : false,
+        //DEBUG : true,
         STATS : true
       },
 
       dist : {
         CONFIG : 'RELEASE',
-        STATS : true
+        //STATS : true
       }
     },
 
@@ -131,6 +131,5 @@ module.exports = function(grunt) {
   grunt.registerTask('dev', ['clean', 'env:dev', 'copy:prepare', 'preprocess', 'copy:finishdev']);
   grunt.registerTask('dist', ['clean', 'env:dist', 'copy:prepare', 'preprocess', 'uglify:dist', 'copy:finishdist']);
 
-  //grunt.
-
+  grunt.registerTask('default', ['dev']);
 };

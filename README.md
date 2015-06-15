@@ -41,15 +41,16 @@ This project uses Grunt, to install Grunt and the various Grunt related grunt st
 
 ### Building
 
-There are two build types `dev` and `dist` for development mode or distribution mode. Development mode leaves all the source files un-minified and un-concatenated. Distribution mode strips out all debug messages, minifies the files, and combines them into a single .js file.
+There are two build types `dev` and `dist` for development mode or distribution mode. Development mode leaves all the source files un-minified and un-concatenated. Distribution mode strips out all debug messages, minifies the files, and combines them into a single .js file. The default mode is `dev` so you can build like this:
 
-	grunt dev
+	grunt
 	
-or..
+Or to do a minified 'release' build:
 	
 	grunt dist
+	
+**IMPORTANT NOTE:** To keep things tidy, the build process will **delete** both the `public` and `build` folders each time it's run. Don't put important stuff in either of those locations!
 
-**IMPORTANT NOTE:** The build process will delete both the `public` and `build` folders each time it's run to keep things tidy so don't put important stuff in either of those locations.
 
 ### Running the game
 
