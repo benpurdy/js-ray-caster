@@ -31,11 +31,8 @@ function distance(x1,y1, x2,y2){
 	return (x2-x1)*(x2-x1) + (y2-y1)*(y2-y1);
 }
 
-function doLinesIntersect(x1, y1, x2, y2, xa, ya, xb, yb) {
 
-}
-
-// 2D vector.
+// Watch out, it's a 2D vector.
 
 function Vec2(x, y){
 	this.x = x;

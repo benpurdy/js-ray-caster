@@ -35,6 +35,7 @@ function generateMap() {
 		40, 40, 41, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
 	];
 
+
 	// randomize edge walls for more interestingness.
 	for(var i = 0; i < WORLD_STRIDE; i++) {
 		tmpWorld[i] = randomInt(6) + 40;
@@ -49,74 +50,91 @@ function generateMap() {
 	for(var i = 0; i < tmpWorld.length; i++) {
 		var flags = 0;
 		
-		var frontface = 0;
-		var backface = 0;
+		var visibleface = 0;
 		var walkableface = 0;
+		var usableface = 0;
 
 		if(tmpWorld[i] == 58) { // Vines
-			flags |= TILE_FLAGS_TRANSPARENT;
-			flags |= TILE_FLAGS_WALKABLE;
-			flags |= TILE_FLAGS_VISIBLE;
+			
+			flags = TILE_FLAGS_TRANSPARENT | TILE_FLAGS_WALKABLE | TILE_FLAGS_VISIBLE;
 
 			// assign a random face to be visible.
 			var f1, f1;
 			switch(randomInt(4)){
 				case 0:
-					f1 = TILE_FACE_S;
-					f2 = TILE_FACE_N;
+					visibleface = TILE_FACE_S;
 				break;
 					case 1:
-					f1 = TILE_FACE_N;
-					f2 = TILE_FACE_S;
+					visibleface = TILE_FACE_N;
 				break;
 				case 2:
-					f1 = TILE_FACE_E;
-					f2 = TILE_FACE_W;
+					visibleface = TILE_FACE_E;
 				break;
 				case 3:
-					f1 = TILE_FACE_W;
-					f2 = TILE_FACE_E;
+					visibleface = TILE_FACE_W;
 				break;
 			}
+			walkableface = TILE_FACE_ALL;
 
-			frontface |= f1;
-			backface |= f2;
-			
 		} else if(tmpWorld[i] == 57) { // Fence
-			flags += TILE_FLAGS_TRANSPARENT;
-			flags += TILE_FLAGS_VISIBLE;
-			flags |= TILE_FLAGS_WALKABLE;
 			
-			frontface |= TILE_FACE_N;
-			frontface |= TILE_FACE_S;
-			walkableface = frontface;
+			flags = TILE_FLAGS_TRANSPARENT | TILE_FLAGS_VISIBLE | TILE_FLAGS_WALKABLE;
+			visibleface = TILE_FACE_N | TILE_FACE_S;
+			walkableface = TILE_FACE_E | TILE_FACE_W;
 
-			backface |= TILE_FACE_N;
-			backface |= TILE_FACE_S;
 		} else if(tmpWorld[i] == 59) { // Bars
-			flags += TILE_FLAGS_TRANSPARENT;
-			flags += TILE_FLAGS_VISIBLE;
-			flags |= TILE_FLAGS_WALKABLE;
 			
-			frontface |= TILE_FACE_S
-			walkableface = frontface;
-			backface |= TILE_FACE_N;
+			flags = TILE_FLAGS_TRANSPARENT | TILE_FLAGS_VISIBLE | TILE_FLAGS_WALKABLE;
+			
+			visibleface = TILE_FACE_S;
+
+			walkableface = ~visibleface;
+			usableface = visibleface;
+		
 		} else if(tmpWorld[i] != 0) { // Flag all other non-empty tiles as visible.
-			flags |= TILE_FLAGS_VISIBLE;
-			frontface = TILE_FACE_ALL;
+		
+			flags = TILE_FLAGS_VISIBLE;
+
+			visibleface = TILE_FACE_ALL;
+			walkableface = 0;
+		
 		}
 
 		if(tmpWorld[i] == 0) { // make empty spaces walkable.
-			flags |= TILE_FLAGS_WALKABLE;
+			flags = TILE_FLAGS_WALKABLE;
+			walkableface = TILE_FACE_ALL;
 		}
 
-		world.push( {
-			textureIndex:tmpWorld[i],
-			flags: flags,
+
+		var x = i%WORLD_STRIDE;
+		var y = ~~(i/WORLD_STRIDE);
+		var faceVectors = [];
+		var offsets = [
+			[0,0, 1,0],
+			[1,0, 1,1],
+			[1,1, 0,1],
+			[0,1, 0,0]
+		];
+		for(var f = 0; f < 4; f++) {
+			var fx =  (offsets[f][0] + x) * GRID_SIZE;
+			var fy =  (offsets[f][1] + y) * GRID_SIZE;
+			var fx2 = (offsets[f][2] + x) * GRID_SIZE;
+			var fy2 = (offsets[f][3] + y) * GRID_SIZE;
+
+			faceVectors.push( [new Vec2(fx, fy), new Vec2(fx2,fy2)] );
+		}
+
+		world.push({
+			gridx : x,
+			gridy : y,
+			textureIndex: tmpWorld[i],
+			flags: 				flags,
 			walkableface: walkableface,
-			frontface: frontface,
-			backface: backface
-		})
+			frontface: 		visibleface,
+			backface: 		visibleface,
+			useableface:  usableface,
+			faceVectors:  faceVectors
+		});
 	}
 
 	for(var i = 0; i < 20; i++) {
@@ -161,6 +179,25 @@ function getWorld(x, y){
 	return  tx + ty * WORLD_STRIDE;
 }
 
+function getTilePosition(tileId) {
+
+}
+
+function intersectSides(tile, x1,y1, x2,y2) {
+	var testVec1 = new Vec2(x1, y1);
+	var testVec2 = new Vec2(x2, y2);
+
+//	console.log(testVec1, testVec2);
+
+	for(var i = 0; i < 4; i++) {
+		var d = intersectVectors(tile.faceVectors[i][0], tile.faceVectors[i][1], testVec1, testVec2);
+		if(d >= 0 && d <= 1){
+			return 1<<i; //console.log("zap: " + d + ", face:"+ i, tile.faceVectors[i][0], tile.faceVectors[i][1]);
+		}
+	}
+
+	return 0;
+}
 
 // @ifdef DEBUG
 function debugDrawWorld() {
@@ -241,4 +278,13 @@ function isTransparent(tileFlags) {
 // still might not DRAW anything but it has the opportunity to...
 function isVisible(tileFlags) {
 	return (tileFlags & TILE_FLAGS_VISIBLE) == TILE_FLAGS_VISIBLE;
+}
+
+function use(tile, face) {
+	if(tile.textureIndex == 59) {
+		//tile.state.isOpen = !tile.state.isOpen;
+		tile.frontface &= ~face;
+		tile.backface &= ~face;
+		tile.walkableface |= face;
+	}
 }

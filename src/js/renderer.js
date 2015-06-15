@@ -109,42 +109,38 @@ function renderSprites() {
 				projectedHeight, 
 				projectedHeight);
 			
-				// @ifdef DEBUG
-					// highlight "visible" sprites.
-					ctxd.strokeStyle = "blue";
-					ctxd.fillStyle = "blue";
-				// @endif
+			// @ifdef DEBUG
+			// highlight "visible" sprites.
+			ctxd.strokeStyle = "blue";
+			ctxd.fillStyle = "blue";
+			// @endif
 
 		} else 
 		{
 			// @ifdef DEBUG
-				ctxd.strokeStyle = "#808080";
-				ctxd.fillStyle = "#808080";
+			ctxd.strokeStyle = "#808080";
+			ctxd.fillStyle = "#808080";
 			// @endif
 		}
 
 		// @ifdef DEBUG
-		if(debug){
-			ctxd.fillRect(sprites[i].x / 2 - 2, sprites[i].y / 2-2, 4, 4);
-			ctxd.beginPath();
-			ctxd.moveTo(sprites[i].x / 2, sprites[i].y / 2);
-			ctxd.lineTo(dx / 2, dy / 2);
-			ctxd.stroke();
-		}
+		ctxd.fillRect(sprites[i].x / 2 - 2, sprites[i].y / 2-2, 4, 4);
+		ctxd.beginPath();
+		ctxd.moveTo(sprites[i].x / 2, sprites[i].y / 2);
+		ctxd.lineTo(dx / 2, dy / 2);
+		ctxd.stroke();
 		// @endif
 	}
 
 	// @ifdef DEBUG
-	if(debug){
-		// draw FOV clip lines
-		ctxd.strokeStyle = "#d0d0d0";
-		ctxd.beginPath();
-		ctxd.moveTo(pvx / 2, pvy / 2);
-		ctxd.lineTo(playerX / 2, playerY / 2);
-		ctxd.lineTo(pvx2 / 2, pvy2 / 2);
-		ctxd.stroke();
-		ctxd.fillRect(playerX/2-1,playerY/2-1,3,3);
-	}
+	// draw FOV clip lines
+	ctxd.strokeStyle = "#d0d0d0";
+	ctxd.beginPath();
+	ctxd.moveTo(pvx / 2, pvy / 2);
+	ctxd.lineTo(playerX / 2, playerY / 2);
+	ctxd.lineTo(pvx2 / 2, pvy2 / 2);
+	ctxd.stroke();
+	ctxd.fillRect(playerX/2-1,playerY/2-1,3,3);
 	// @endif
 }
 
@@ -247,7 +243,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		stepHX = -GRID_SIZE / Math.tan(angle);
 		
 		invertTextureCoordsH = isBackFace;
-		faceBitsHorizontal = TILE_FACE_S;
+		faceBitsHorizontal = isBackFace ? TILE_FACE_N : TILE_FACE_S;
 	} else {
 		testY = ~~(startY / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
 		testX = startX - (startY - testY) / tanAngle;
@@ -258,7 +254,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		stepHX = GRID_SIZE / tanAngle;
 		
 		invertTextureCoordsH = !isBackFace;
-		faceBitsHorizontal = TILE_FACE_N;
+		faceBitsHorizontal = isBackFace ? TILE_FACE_S : TILE_FACE_N;
 	}
 
 	steps = 0;
@@ -297,7 +293,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		stepVY = -GRID_SIZE * tanAngle;
 		stepVX = -GRID_SIZE;
 		invertTextureCoordsV = !isBackFace;
-		faceBitsVertical = TILE_FACE_E;
+		faceBitsVertical = isBackFace ? TILE_FACE_W : TILE_FACE_E;
 	} else {
 		testX = ~~(startX / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
 		testY = startY - (startX - testX) * tanAngle;
@@ -307,7 +303,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		stepVX = GRID_SIZE;
 		stepVY = GRID_SIZE * tanAngle;
 		invertTextureCoordsV = isBackFace;
-		faceBitsVertical = TILE_FACE_W;
+		faceBitsVertical = isBackFace ? TILE_FACE_E : TILE_FACE_W;
 	}
 
 	steps = 0;
@@ -389,13 +385,11 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 	}
 
 	// @ifdef DEBUG
-	if(debug){
-		ctxd.strokeStyle = isBackFace ? "rgba(0,255,0,0.2)" : "rgba(0,0,0,0.2)";
-		ctxd.beginPath();
-		ctxd.moveTo(startX / 2, startY / 2);
-		ctxd.lineTo(vx / 2, vy / 2);
-		ctxd.stroke();
-	}
+	ctxd.strokeStyle = isBackFace ? "rgba(0,255,0,0.1)" : "rgba(0,0,0,0.1)";
+	ctxd.beginPath();
+	ctxd.moveTo(startX / 2, startY / 2);
+	ctxd.lineTo(vx / 2, vy / 2);
+	ctxd.stroke();
 	// @endif
 }
 

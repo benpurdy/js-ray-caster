@@ -3,6 +3,23 @@ for(var i = 0; i < 180; i++){
 	keys[i] = false;
 }
 
+var KEY_W = 87;
+var KEY_S = 83;
+var KEY_D = 68;
+var KEY_A = 65;
+var KEY_Q = 81;
+var KEY_E = 69;
+var KEY_F = 70;
+
+var KEY_UP = 38;
+var KEY_DOWN = 40;
+var KEY_LEFT = 37;
+var KEY_RIGHT = 39;
+
+var KEY_SPACE = 32;
+
+var MOVE_EPSILON = 1;
+
 function setKey(key, state){
 	keys[key] = state;
 }
@@ -12,38 +29,87 @@ function keyDown(evt){
 	if(!keys[evt.keyCode]) {
 
 		setKey(evt.keyCode, true);
-		
-		if(keys[37] || keys[81]) {
-			turnLeft();
-		}
-
-		if(keys[39] || keys[69]) {
-			turnRight();
-		}
-		
-		if(keys[65]) {
-			straifLeft();
-		}
-		
-		if(keys[68]) {
-			straifRight();
-		}
-
-		if(keys[87]) {
-			forward();
-		}
-		
-		if(keys[83]) {
-			backward()
-		}
+		keyPressed(evt.keyCode);
 	}
 }
+
+function keyPressed(code) {
+	switch(code) {
+		case KEY_W:
+		case KEY_UP:
+			forward();
+		break;
+
+		case KEY_S:
+		case KEY_DOWN:
+			backward();
+		break;
+
+		case KEY_A:
+			straifLeft();
+		break;
+
+		case KEY_D:
+			straifRight();
+		break;
+
+		case KEY_Q:
+		case KEY_LEFT:
+			turnLeft();
+		break;
+
+		case KEY_E:
+		case KEY_RIGHT:
+			turnRight();
+		break;
+
+		case KEY_F:
+			action();
+		break;
+
+		default:
+		console.log("key: " + code);
+		break;
+	}
+}
+
 
 function keyUp(evt){
 	setKey(evt.keyCode, false);
 }
 
+
+function playerCanMove(targetX, targetY) {
+	return ( (Math.abs(playerX - targetX) <= GRID_SIZE*2) && (Math.abs(playerY - targetY) <= GRID_SIZE*2) );
+} 
+
+
+function action(){
+	var cosa = Math.cos(playerDirection);
+	var sina = Math.sin(playerDirection);
+	
+	var useX = playerX + cosa * (GRID_SIZE*0.75);
+	var useY = playerY + sina * (GRID_SIZE*0.75);
+
+	var tx = ~~(playerX / GRID_SIZE);
+	var ty = ~~(playerY / GRID_SIZE);
+
+	var tileId1 = getWorld(useX, useY);
+
+	var hitFace = intersectSides(world[tileId1], playerX, playerY, useX, useY);
+	if(hitFace) {
+		use(world[tileId1], hitFace);
+	}
+	//console.log( hit );
+
+	//use(world[tileId]);
+}
+
+
 function tryMove(oldX, oldY, newX, newY) {
+	if(!playerCanMove(newX, newY)){
+		return false;
+	}
 
 	var newTile = world[getWorld(newX, newY)];
 
@@ -78,11 +144,11 @@ function tryMove(oldX, oldY, newX, newY) {
 			moveBitOutgoing = TILE_FACE_N;
 		}
 
-		if( ((moveBitIncoming & newTile.walkableface) != 0) || 
-			((moveBitOutgoing & currentTile.walkableface) != 0) ){
-			return false;
-		} else {
+		if( ((moveBitIncoming & newTile.walkableface) != 0) && 
+			( (moveBitOutgoing & currentTile.walkableface) != 0) ){
 			return true;
+		} else {
+			return false;
 		}
 	}
 }

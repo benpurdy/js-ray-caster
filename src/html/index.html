@@ -9,6 +9,9 @@
 	https://github.com/benpurdy/js-ray-caster
 -->
 <!-- @endif -->
+<!-- @if CONFIG == "DEV" -->
+<!-- DEVELOPMENT BUILD -->
+<!-- @endif -->
 <html>
 
 <head>
@@ -24,8 +27,9 @@
 	<!-- @if CONFIG == "DEV" -->
 	<canvas width="500" height="500" id="debug" style="display:none;"></canvas>
 	<!-- @endif -->
+	<!-- @ifdef STATS -->
 	<div id="status"></div>
-
+	<!-- @endif -->
 	<div id="resources" style="display:none;">
 		<img src="" id="texture">
 	</div>
@@ -52,9 +56,7 @@
 	<script src="js/app.min.js"></script>
 	<!-- @endif -->
 
-	<script>
-	initialize();
-	</script>
+	<script> initialize(); </script>
 </body>
 
 </html>

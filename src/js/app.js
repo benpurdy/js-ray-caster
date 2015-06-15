@@ -143,6 +143,15 @@ function updatePlayer(delta) {
 	playerX += playerXDelta * delta;
 	playerY += playerYDelta * delta;
 
+	// @ifdef STATS
+	var tx = ~~(playerX / GRID_SIZE);
+	var ty = ~~(playerY / GRID_SIZE);
+	var currentTile = getWorld(playerX, playerY);
+	stats.playerTileId = currentTile;
+	stats.playerPosition = tx + ", " + ty;
+	// @endif
+
+
 	/*
 	// player head-bob
 	var d = distance(0,0, playerXDelta,playerYDelta);
@@ -184,15 +193,17 @@ function update(now) {
 		var timeStamp1 = new Date().getTime();
 		updatePlayer(targetFrameTime);
 
+// @ifdef DEBUG
+		debugDrawWorld();
+// @endif
+
+
 		renderWorld();
-		renderSprites();
+		//renderSprites();
 
 		loadColorTexture(buffer8);
 		loadDepthTexture(depthBuffer);
 		
-// @ifdef DEBUG
-		debugDrawWorld();
-// @endif
 
 		drawGL();
 		var timeStamp2 = new Date().getTime();
