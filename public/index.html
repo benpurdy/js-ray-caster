@@ -1,0 +1,77 @@
+<!-- 
+	Hello person looking at source code.. 
+
+	This is a minified build.  If you want to see  
+	the non-minified source, take a look at the 
+	github repository:
+
+	https://github.com/benpurdy/js-ray-caster
+-->
+<html>
+
+<head>
+	<title></title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<link href="css/style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+
+	<canvas id="output"></canvas>
+
+	<div id="resources" style="display:none;">
+		<img src="" id="texture">
+	</div>
+
+	<script id="vertex-shader" type="x-shader/x-vertex">
+	precision mediump float;
+	
+	attribute vec2 a_position;
+	attribute vec2 a_uv;
+	
+	varying vec2 UV;
+	 
+	void main() {
+		UV = a_uv;
+	  gl_Position = vec4(a_position, 0, 1);
+	}
+	</script>
+	 
+	<script id="fragment-shader" type="x-shader/x-fragment">
+	precision highp float;
+	
+	varying vec2 UV;
+	
+	uniform sampler2D u_image;
+	uniform sampler2D u_depth;
+	
+	const float falloffStart = 128.0;
+	const float falloffEnd = 768.0;
+	const float falloffPower = 0.8;
+	const float colorSteps = 8.0;
+	const float fogMax = 1.0;
+	const vec3 fogColor = vec3(0.0, 0.0, 0.0);
+	
+	void main() {
+		
+		float depthSample = texture2D(u_depth, UV).r;
+	
+		vec3 color = texture2D(u_image, UV).rgb;
+	
+		depthSample = smoothstep(falloffStart, falloffEnd, depthSample);
+		depthSample = pow(depthSample, falloffPower);
+		
+		depthSample = ceil(depthSample * colorSteps) / colorSteps;
+		
+		depthSample = mix(0.0, fogMax, depthSample);
+		color = mix(color, fogColor, depthSample);
+		
+		gl_FragColor = vec4(color, 1.0);
+	}
+	</script>
+
+	<script src="js/app.min.js"></script>
+	<script> initialize(); </script>
+</body>
+
+</html>
