@@ -14,6 +14,7 @@ var TILE_FACE_W = 1 << 3;
 
 var TILE_FACE_ALL = TILE_FACE_N + TILE_FACE_E + TILE_FACE_S + TILE_FACE_W;
 
+var barsTile;
 
 function generateMap() {
 
@@ -55,7 +56,7 @@ function generateMap() {
 		var usableface = 0;
 
 		if(tmpWorld[i] == 58) { // Vines
-			
+
 			flags = TILE_FLAGS_TRANSPARENT | TILE_FLAGS_WALKABLE | TILE_FLAGS_VISIBLE;
 
 			// assign a random face to be visible.
@@ -83,7 +84,7 @@ function generateMap() {
 			walkableface = TILE_FACE_E | TILE_FACE_W;
 
 		} else if(tmpWorld[i] == 59) { // Bars
-			
+			barsTile = i;
 			flags = TILE_FLAGS_TRANSPARENT | TILE_FLAGS_VISIBLE | TILE_FLAGS_WALKABLE;
 			
 			visibleface = TILE_FACE_S;
@@ -105,7 +106,8 @@ function generateMap() {
 			walkableface = TILE_FACE_ALL;
 		}
 
-
+		// Set up pairs of vectors for each wall segment to use for 
+		// intersection testing later on.
 		var x = i%WORLD_STRIDE;
 		var y = ~~(i/WORLD_STRIDE);
 		var faceVectors = [];
@@ -132,8 +134,9 @@ function generateMap() {
 			walkableface: walkableface,
 			frontface: 		visibleface,
 			backface: 		visibleface,
-			useableface:  usableface,
-			faceVectors:  faceVectors
+			usableface:  usableface,
+			faceVectors:  faceVectors,
+			texOffset:    0
 		});
 	}
 
@@ -179,21 +182,20 @@ function getWorld(x, y){
 	return  tx + ty * WORLD_STRIDE;
 }
 
-function getTilePosition(tileId) {
-
-}
 
 function intersectSides(tile, x1,y1, x2,y2) {
 	var testVec1 = new Vec2(x1, y1);
 	var testVec2 = new Vec2(x2, y2);
 
-//	console.log(testVec1, testVec2);
-
+	// see if any face are intersected.
 	for(var i = 0; i < 4; i++) {
 		var d = intersectVectors(tile.faceVectors[i][0], tile.faceVectors[i][1], testVec1, testVec2);
+	//	console.log("wall " + i + ": " + d);
 		if(d >= 0 && d <= 1){
-			return 1<<i; //console.log("zap: " + d + ", face:"+ i, tile.faceVectors[i][0], tile.faceVectors[i][1]);
-		}
+			//console.log("HIT FACE:" + i + " at " + d);
+			//TODO: this is dumb, changing the TILE_FACE bit values can break this.
+			return (1 << i); 
+		} 
 	}
 
 	return 0;
@@ -282,9 +284,19 @@ function isVisible(tileFlags) {
 
 function use(tile, face) {
 	if(tile.textureIndex == 59) {
-		//tile.state.isOpen = !tile.state.isOpen;
-		tile.frontface &= ~face;
-		tile.backface &= ~face;
-		tile.walkableface |= face;
+		tile.isOpen = !tile.isOpen;
 	}
+}
+
+
+function debugAnimateBars(now) {
+	var target = world[barsTile].isOpen ? 1 : 0.05;
+	world[barsTile].texOffset += (target - world[barsTile].texOffset) * 0.15;
+	
+	if(world[barsTile].texOffset > 0.5){
+		world[barsTile].walkableface = TILE_FACE_ALL;
+	} else {
+		world[barsTile].walkableface = TILE_FACE_ALL & ~TILE_FACE_S;
+	}
+		
 }

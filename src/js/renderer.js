@@ -156,7 +156,15 @@ function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 	var tileY = ~~(tile.textureIndex / 8);
 
 	var idx = 0;
-	var texX = Math.round(Math.min((tileX * TILE_SIZE) + slice, (tileX * TILE_SIZE) + TILE_SIZE));
+	var sliceTexOffsetX = slice + ~~(tile.texOffset * TILE_SIZE);
+	var texX = Math.round(Math.min((tileX * TILE_SIZE) + sliceTexOffsetX, (tileX * TILE_SIZE) + TILE_SIZE));
+//	texX += ~~(tile.texOffset * TILE_SIZE);
+	
+	// bail if the texture offset means we're outside of a tile.
+	if((sliceTexOffsetX < 0) || (sliceTexOffsetX >= TILE_SIZE)){
+		return;
+	}
+
 	var texY = tileY * TILE_SIZE;
 	var pixelOffset = texX + (texY * 128);
 

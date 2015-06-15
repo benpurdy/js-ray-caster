@@ -8,9 +8,14 @@ var GRID_SIZE = 64;
 var VIEWPORT_WIDTH = 160;
 var VIEWPORT_HEIGHT = 100;
 
-// THESE MUST BE POWERS OF TWO (and must be large enough to contain viewport)
-var BUFFER_WIDTH = 256;
-var BUFFER_HEIGHT = 256;
+// find the smallest power of two that can fit the viewport texture
+var bufferDimension = 1;
+while(bufferDimension < VIEWPORT_WIDTH){
+	bufferDimension = bufferDimension << 1;
+}
+
+var BUFFER_WIDTH = bufferDimension;
+var BUFFER_HEIGHT = bufferDimension;
 
 
 var canvas = document.getElementById("output");
@@ -193,6 +198,7 @@ function update(now) {
 		var timeStamp1 = new Date().getTime();
 		updatePlayer(targetFrameTime);
 
+		debugAnimateBars(now);
 // @ifdef DEBUG
 		debugDrawWorld();
 // @endif

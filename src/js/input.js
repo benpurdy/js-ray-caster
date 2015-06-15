@@ -68,7 +68,7 @@ function keyPressed(code) {
 		break;
 
 		default:
-		console.log("key: " + code);
+		//console.log("key: " + code);
 		break;
 	}
 }
@@ -78,7 +78,7 @@ function keyUp(evt){
 	setKey(evt.keyCode, false);
 }
 
-
+// 
 function playerCanMove(targetX, targetY) {
 	return ( (Math.abs(playerX - targetX) <= GRID_SIZE*2) && (Math.abs(playerY - targetY) <= GRID_SIZE*2) );
 } 
@@ -88,21 +88,24 @@ function action(){
 	var cosa = Math.cos(playerDirection);
 	var sina = Math.sin(playerDirection);
 	
-	var useX = playerX + cosa * (GRID_SIZE*0.75);
-	var useY = playerY + sina * (GRID_SIZE*0.75);
-
-	var tx = ~~(playerX / GRID_SIZE);
-	var ty = ~~(playerY / GRID_SIZE);
-
-	var tileId1 = getWorld(useX, useY);
-
+	var useX = playerX + cosa * (GRID_SIZE * 0.75);
+	var useY = playerY + sina * (GRID_SIZE * 0.75);
+	
+	// try to use the wall of the tile you're in
+	var tileId1 = getWorld(playerX, playerY);
 	var hitFace = intersectSides(world[tileId1], playerX, playerY, useX, useY);
-	if(hitFace) {
+	if((hitFace & world[tileId1].usableface) != 0) {
 		use(world[tileId1], hitFace);
+		return;
 	}
-	//console.log( hit );
 
-	//use(world[tileId]);
+	// try to use the neighboring wall
+	var tileId2 = getWorld(useX, useY);
+	var hitFace = intersectSides(world[tileId2], playerX, playerY, useX, useY);
+	if((hitFace & world[tileId2].usableface) != 0) {
+		use(world[tileId2], hitFace);
+		return;
+	}
 }
 
 
