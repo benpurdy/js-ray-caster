@@ -134,9 +134,10 @@ function generateMap() {
 			walkableface: walkableface,
 			frontface: 		visibleface,
 			backface: 		visibleface,
-			usableface:  usableface,
+			usableface:   usableface,
 			faceVectors:  faceVectors,
-			texOffset:    0
+			texOffsetX:   0,
+			texOffsetY:   0
 		});
 	}
 
@@ -282,6 +283,7 @@ function isVisible(tileFlags) {
 	return (tileFlags & TILE_FLAGS_VISIBLE) == TILE_FLAGS_VISIBLE;
 }
 
+
 function use(tile, face) {
 	if(tile.textureIndex == 59) {
 		tile.isOpen = !tile.isOpen;
@@ -290,10 +292,15 @@ function use(tile, face) {
 
 
 function debugAnimateBars(now) {
-	var target = world[barsTile].isOpen ? 1 : 0.05;
-	world[barsTile].texOffset += (target - world[barsTile].texOffset) * 0.15;
+	var target = world[barsTile].isOpen ? 0.95 : 0.00;
 	
-	if(world[barsTile].texOffset > 0.5){
+	if(world[barsTile].isOpen) {
+		world[barsTile].texOffsetX = Math.min(target, world[barsTile].texOffsetX + 0.05);
+	} else {
+		world[barsTile].texOffsetX = Math.max(target, world[barsTile].texOffsetX - 0.05);
+	}
+	
+	if(world[barsTile].texOffsetX > 0.8){
 		world[barsTile].walkableface = TILE_FACE_ALL;
 	} else {
 		world[barsTile].walkableface = TILE_FACE_ALL & ~TILE_FACE_S;

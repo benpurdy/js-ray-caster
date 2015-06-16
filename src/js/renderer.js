@@ -156,7 +156,7 @@ function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 	var tileY = ~~(tile.textureIndex / 8);
 
 	var idx = 0;
-	var sliceTexOffsetX = slice + ~~(tile.texOffset * TILE_SIZE);
+	var sliceTexOffsetX = slice;// + tile.texOffsetX) * TILE_SIZE;
 	var texX = Math.round(Math.min((tileX * TILE_SIZE) + sliceTexOffsetX, (tileX * TILE_SIZE) + TILE_SIZE));
 //	texX += ~~(tile.texOffset * TILE_SIZE);
 	
@@ -165,7 +165,7 @@ function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 		return;
 	}
 
-	var texY = tileY * TILE_SIZE;
+	var texY = tileY * TILE_SIZE + ~~(tile.texOffsetY * TILE_SIZE);
 	var pixelOffset = texX + (texY * 128);
 
 	var sampleY = 0;
@@ -182,7 +182,7 @@ function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 	
 		idx = (x + (pixel + y1) * BUFFER_WIDTH);
 		sampleY = ~~(samplesPerPixel * pixel);
-		textureSample = textureLookup32[pixelOffset + (sampleY << 7)];
+		textureSample = textureLookup32[pixelOffset + (sampleY * 128)];
 		
 		if(textureSample && 0xff000000 == 0xff000000) {
 			buffer32[idx] = textureSample;
@@ -191,7 +191,7 @@ function drawSlice(tileId, slice, x, y1, y2, dist, sliceData) {
 
 		idx = (x + (y2 - pixel) * BUFFER_WIDTH);
 		sampleY = (TILE_SIZE - 1) - sampleY;
-		textureSample = textureLookup32[pixelOffset + (sampleY << 7)];
+		textureSample = textureLookup32[pixelOffset + (sampleY * 128)];
 
 		if(textureSample && 0xff000000 == 0xff000000) {
 			buffer32[idx] = textureSample;
@@ -508,7 +508,7 @@ function renderWorld() {
 
 			drawSlice(
 				slice.tileId, 
-				~~(slice.sampleX * TILE_SIZE), 
+				~~((slice.sampleX + world[slice.tileId].texOffsetX) * TILE_SIZE), 
 				i, 
 				y1,
 				y2,
@@ -548,7 +548,7 @@ function renderWorld() {
 
 			drawSlice(
 				slice.tileId, 
-				~~(slice.sampleX * TILE_SIZE), 
+				~~((slice.sampleX + world[slice.tileId].texOffsetX) * TILE_SIZE), 
 				VIEWPORT_WIDTH - i - 1, 
 				y1,
 				y2,
