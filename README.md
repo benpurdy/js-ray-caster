@@ -2,9 +2,7 @@
 
 A little ray casting engine in javascript. All rasterizing is handled in javascript, webGL is used to get the pixels on the screen and apply depth-based lighting because the canvas putImageData() method is slooooowwww..
 
-## I Just Want to Play It!
-
-[Try the live demo](https://benpurdy.github.io/js-ray-caster/public/), maybe it will work on your computer/phone (no promises, this is very much a work in progres).
+[**Try the live demo**](https://benpurdy.github.io/js-ray-caster/public/), maybe it will work on your computer/phone (no promises, this is very much a work in progres).
 
 The live demo is updated every so often but might be a little behind the current source code.
 

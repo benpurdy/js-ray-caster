@@ -191,6 +191,8 @@ function forward(){
 	if(tryMove(targetPlayerX, targetPlayerY, newX, newY)){
 		targetPlayerX = newX;
 		targetPlayerY = newY;
+	} else {
+		action();
 	}
 }
 

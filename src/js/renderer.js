@@ -32,7 +32,7 @@ function drawSprite(tileX, tileY, x, y, depth, width, height) {
 
 			bufferIndex = (px) + ((py) * BUFFER_WIDTH);
 
-			textureSample = textureLookup32[((texX + xIndex) + (texY + yIndex) * 128)];
+			textureSample = textureLookup32[((texX + xIndex) + (texY + yIndex) * TEXTURE_SIZE)];
 			
 			if((depthBuffer[bufferIndex] > depth) && ((textureSample & 0xff000000) != 0)){
 				buffer32[bufferIndex] = textureSample;
@@ -149,8 +149,8 @@ function drawSlice(viewX, eyeHeight, slice, angle, correctedDistance, drawFloor)
 	//var correctedDistance = slice.distance * Math.cos(-halfFov + i * step);
 	
 	var tile = world[slice.tileId];
-	var tileX = tile.textureIndex % 8;
-	var tileY = ~~(tile.textureIndex / 8);
+	//var tileX = tile.textureIndex % 8;
+	//var tileY = ~~(tile.textureIndex / 8);
 	
 	var texCoordX = slice.sampleX + slice.texOffsetX;
 
@@ -159,17 +159,17 @@ function drawSlice(viewX, eyeHeight, slice, angle, correctedDistance, drawFloor)
 	}
 
 
-	var textureOffset = (tileX * 16) + (tileY * 16) * 128;
+	var textureOffset = tile.tileTextureOffset;//(tileX * TILE_SIZE) + (tileY * TILE_SIZE) * TEXTURE_SIZE;
 
 	var sliceHeight = ~~(GRID_SIZE / correctedDistance * distanceToProjectionPlane);
 	var halfSlice =	~~(sliceHeight / 2);
-	sliceHeight = halfSlice*2;
-
+	
 	var viewOffsetY = ~~(eyeHeight / correctedDistance * distanceToProjectionPlane);
 
 	var y1 = (halfViewHeight - halfSlice - viewOffsetY);
-	var y2 = (halfViewHeight + halfSlice - viewOffsetY);
-
+	var y2 = Math.ceil(halfViewHeight + halfSlice - viewOffsetY)+1;
+	sliceHeight = y2-y1;
+	
 	// clip to viewport
 	var y = Math.max(y1, 0);
 	var stop = Math.min(y2, VIEWPORT_HEIGHT);
@@ -180,16 +180,16 @@ function drawSlice(viewX, eyeHeight, slice, angle, correctedDistance, drawFloor)
 	var textureY;
 	
 	
-	textureOffset += ~~(texCoordX * 16);
+	textureOffset += ~~(texCoordX * TILE_SIZE);
 	
 
 	while(y < stop) {
 
 		textureY = (y - y1) / sliceHeight;
-		textureY = ~~(textureY * 16);
+		textureY = ~~(textureY * TILE_SIZE);
 		
 		idx = viewX + ~~y * BUFFER_WIDTH;
-		textureSample = textureLookup32[textureOffset + textureY * 128];
+		textureSample = textureLookup32[textureOffset + textureY * TEXTURE_SIZE];
 		
 		if((textureSample & 0xff000000) != 0) {
 			buffer32[idx] = textureSample;
@@ -203,6 +203,11 @@ function drawSlice(viewX, eyeHeight, slice, angle, correctedDistance, drawFloor)
 		castCeiling(y1, viewX, angle);
 		castFloor(y2, viewX, angle);
 	}
+}
+
+function getPixelIndexForTexture(textureIndex) {
+
+	return ((textureIndex % 16) * TILE_SIZE) + (~~(textureIndex / 16) * TILE_SIZE) * TEXTURE_SIZE;
 }
 
 function debugClearBuffers() {
@@ -514,10 +519,10 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 	}
 
 	// @ifdef DEBUG
-	var r = (maxSteps % 4) * 30;
-	var g = (maxSteps % 3) * 80;
-	var b = (maxSteps % 2) * 120;
-	ctxd.strokeStyle = "rgba(" + r + "," + g + ", " + b + ", 0.1)";
+	var r = ((maxSteps % 2) < 1) * 80;
+	var g = ((maxSteps % 3) < 2) * 80;
+	var b = ((maxSteps % 4) < 3) * 80;
+	ctxd.strokeStyle = "rgba(" + r + "," + g + ", " + b + ", 0.4)";
 	ctxd.beginPath();
 	ctxd.moveTo(startX, startY);
 	ctxd.lineTo(vx, vy);
@@ -525,22 +530,50 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 	// @endif
 }
 
+var offsetPlayerX;
+var offsetPlayerY;
 
 function castFloor(startY, screenX, angle) {
+
 	var cosAngle = Math.cos(angle);
+	
+	var cosViewAngle = Math.cos(angle + playerDirection);
+	var sinViewAngle = Math.sin(angle + playerDirection);
 
 	var paralellDistanceToFloor;
 	var distanceToFloor;
 	var pixelIndex;
 
+	var gx = 0;
+	var gy = 0;
+
+	var texX = 0;
+	var texY = 0;
+
+	var tileIndex;
+	var tile;
+	var color;
+	var sampleIndex = 0;
+	
 	for(var y = startY; y < VIEWPORT_HEIGHT; y++) {
 		
 		paralellDistanceToFloor = (playerHeight / (y - halfViewHeight)) * distanceToProjectionPlane;
-		distanceToFloor = ~~(paralellDistanceToFloor / cosAngle);
+		distanceToFloor = paralellDistanceToFloor / cosAngle;
 
+		gx = ~~(distanceToFloor * cosViewAngle + offsetPlayerX);
+		gy = ~~(distanceToFloor * sinViewAngle + offsetPlayerY);
+
+		texX = ~~(gx % GRID_SIZE / 2); 
+		texY = ~~(gy % GRID_SIZE / 2);
+
+		tile = world[getWorld(gx, gy)];
+		sampleIndex = tile.floorTextureOffset + texX + (texY * TEXTURE_SIZE);
+
+		color = textureLookup32[sampleIndex];
 		pixelIndex = (y * BUFFER_WIDTH) + screenX;
-		buffer32[pixelIndex] = floorColor;
-		depthBuffer[pixelIndex] = distanceToFloor;
+
+		buffer32[pixelIndex] = color;
+		depthBuffer[pixelIndex] = ~~distanceToFloor;
 	}
 }
 
@@ -548,18 +581,44 @@ function castFloor(startY, screenX, angle) {
 function castCeiling(stopY, screenX, angle) {
 	var cosAngle = Math.cos(angle);
 
+	var cosViewAngle = Math.cos(angle + playerDirection);
+	var sinViewAngle = Math.sin(angle + playerDirection);
+
 	var paralellDistanceToCeiling;
 	var distanceToCeiling;
 	var eyeHeight = (GRID_SIZE - playerHeight);
 	var pixelIndex;
 
+	var gx = 0;
+	var gy = 0;
+
+	var texX = 0;
+	var texY = 0;
+
+	var tileIndex;
+	var tile;
+	var color;
+	var sampleIndex = 0;
+	
 	for(var y = 0; y < stopY; y++) {
 		paralellDistanceToCeiling = (eyeHeight / (halfViewHeight - y)) * distanceToProjectionPlane;
-		distanceToCeiling = ~~(paralellDistanceToCeiling / cosAngle);
+		distanceToCeiling = (paralellDistanceToCeiling / cosAngle);
+
+		gx = ~~(distanceToCeiling * cosViewAngle + offsetPlayerX);
+		gy = ~~(distanceToCeiling * sinViewAngle + offsetPlayerY);
+
+		texX = ~~(gx % GRID_SIZE / 2); 
+		texY = ~~(gy % GRID_SIZE / 2);
+
+		tile = world[getWorld(gx, gy)];
+		//sampleIndex = getPixelIndexForTexture(tile.ceilingTexture);
+		sampleIndex = tile.ceilingTextureOffset + texX + (texY * TEXTURE_SIZE);
+
+		color = textureLookup32[sampleIndex];
 
 		pixelIndex = (y * BUFFER_WIDTH) + screenX;
-		buffer32[pixelIndex] = ceilingColor;
-		depthBuffer[pixelIndex] = distanceToCeiling;
+		buffer32[pixelIndex] = color;
+		depthBuffer[pixelIndex] = ~~distanceToCeiling;
 	}
 }
 
@@ -592,8 +651,8 @@ function renderWorld() {
 	var slice;
 	var r;
 
-	var offsetPlayerX = playerX;
-	var offsetPlayerY = playerY;
+	offsetPlayerX = playerX;
+	offsetPlayerY = playerY;
 
 	offsetPlayerX -= Math.cos(playerDirection) * 30;
 	offsetPlayerY -= Math.sin(playerDirection) * 30;

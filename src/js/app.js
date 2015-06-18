@@ -2,7 +2,8 @@
 // DEBUG BUILD
 // @endif
 
-var TILE_SIZE = 16;
+var TEXTURE_SIZE = 512;
+var TILE_SIZE = 32;
 var GRID_SIZE = 64;
 
 var VIEWPORT_WIDTH = 160;
@@ -50,7 +51,7 @@ function resetStats() {
 //var debugLog = document.getElementById("debugLog");
 var imgTexture = document.getElementById("texture");
 
-var textureLookup32 = new Uint32Array(128 * 128);
+var textureLookup32 = new Uint32Array(TEXTURE_SIZE * TEXTURE_SIZE);
 
 // buffer for drawing.
 var buffer = new ArrayBuffer(BUFFER_WIDTH * BUFFER_HEIGHT * 4);
@@ -150,6 +151,7 @@ function updatePlayer(delta) {
 	playerX += playerXDelta * delta;
 	playerY += playerYDelta * delta;
 
+
 	// @ifdef STATS
 	var tx = ~~(playerX / GRID_SIZE);
 	var ty = ~~(playerY / GRID_SIZE);
@@ -159,19 +161,20 @@ function updatePlayer(delta) {
 	// @endif
 
 	// player head-bob
-	/*
+	/*	
 	var d = distance(0,0, playerXDelta,playerYDelta);
 	playerHeight = 32;
+
 	if(d > 2) {
 		d = Math.min(200, d) / 200;
-		stats.moveSpeed = d;
 		//d *= 0.01;
 		bob += d * (delta * 10);
-  	playerHeight += Math.floor(Math.abs(Math.sin(bob) * 5 * d));
+  	playerHeight += Math.floor(Math.abs(Math.sin(bob) * 3 * d));
 	} else {
 		bob = 0;
 	}
 	*/
+	
 }
 
 
@@ -255,7 +258,7 @@ function resizeViewport() {
 
 function initialize() {
 
-	imgTexture.src = "images/example1.png";
+	imgTexture.src = "images/32tile.png";
 	generateMap();
 
 		resizeViewport();

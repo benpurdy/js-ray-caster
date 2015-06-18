@@ -20,9 +20,9 @@ function generateMap() {
 
 	var tmpWorld = [
 		40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
-		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40, 58,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0, 58,  0,  0,  0, 35,  0,  0,  0,  0,  0,  0,  0, 40,
-		40,  0, 33,  0, 33,  0, 32,  0,  0,  0,  0,  0,  0,  0, 40,
+		40, 58, 33,  0, 33,  0, 32,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0, 33,  0,  0,  0, 58,  0,  0,  0, 57,  0,  0,  0, 40,
 		40, 58, 33, 59, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
@@ -75,6 +75,8 @@ function generateMap() {
 		var walkableface = 0;
 		var usableface = 0;
 
+		var floorcolor = randomInt(80)+60 + ((randomInt(80)+60) << 8) + ((randomInt(80)+60) << 16);
+
 		if(tmpWorld[i] == 58) { // Vines
 
 			flags = TILE_FLAGS_TRANSPARENT | TILE_FLAGS_WALKABLE | TILE_FLAGS_VISIBLE;
@@ -96,6 +98,7 @@ function generateMap() {
 				break;
 			}
 			walkableface = TILE_FACE_ALL;
+			floorcolor = 0x003000;
 
 		} else if(tmpWorld[i] == 57) { // Fence
 			
@@ -147,18 +150,30 @@ function generateMap() {
 
 			faceVectors.push( [new Vec2(fx, fy), new Vec2(fx2,fy2)] );
 		}
+		var textureIndex = tmpWorld[i];
+		var tileX = textureIndex % 8;
+		var tileY = ~~(textureIndex / 8);
+		var textureOffset = (tileX * TILE_SIZE) + ((tileY * TILE_SIZE) * TEXTURE_SIZE);
+
+		var floor = randomInt(2) + 39;
 
 		world.push({
+			floorcolor: floorcolor,
 			gridx : x,
 			gridy : y,
-			textureIndex: tmpWorld[i],
 			flags: 				flags,
 			walkableface: walkableface,
 			visibleface:  visibleface,
 			usableface:   usableface,
 			faceVectors:  faceVectors,
 			texOffsetX:   0,
-			texOffsetY:   0
+			texOffsetY:   0,
+			textureIndex: tmpWorld[i],
+			floorTexture: floor,
+			ceilingTexture: 41,
+			tileTextureOffset: getPixelIndexForTexture(tmpWorld[i]),
+			ceilingTextureOffset: getPixelIndexForTexture(41),
+			floorTextureOffset: getPixelIndexForTexture(floor)
 		});
 	}
 
@@ -177,8 +192,8 @@ function generateMap() {
 			}
 		}
 
-		var tx = Math.floor(Math.random() * 8);
-		var ty = Math.floor(Math.random() * 4);
+		var tx = Math.floor(Math.random() * 16);
+		var ty = Math.floor(Math.random() * 2);
 
 		sprites.push({
 				"x" : x, 
