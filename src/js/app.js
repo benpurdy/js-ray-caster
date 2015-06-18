@@ -26,6 +26,7 @@ var ctxd = canvasD.getContext("2d");
 canvasD.style.display = "block";
 canvasD.width = WORLD_STRIDE * 32;
 canvasD.height = WORLD_STRIDE * 32;
+ctxd.scale(0.5,0.5);
 document.getElementById("resources").style.display = "block";
 // @endif
 
@@ -129,6 +130,7 @@ imgTexture.addEventListener("load", function() {
 	}
 });
 
+
 function updatePlayer(delta) {
 	
 	playerAngularVelocity += ((targetPlayerDirection - playerDirection) * 50) * delta;
@@ -156,9 +158,8 @@ function updatePlayer(delta) {
 	stats.playerPosition = tx + ", " + ty;
 	// @endif
 
-
-	/*
 	// player head-bob
+	/*
 	var d = distance(0,0, playerXDelta,playerYDelta);
 	playerHeight = 32;
 	if(d > 2) {
@@ -188,30 +189,21 @@ function update(now) {
 	while(frameAccum > targetFrameTime) {
 
 // @ifdef DEBUG
-		if(debug) {
-			ctxd.fillStyle = "white";
-			ctxd.fillRect(0, 0, canvasD.width, canvasD.height);
-			debugDrawWorld();
-		}
+		ctxd.fillStyle = "white";
+		ctxd.fillRect(0, 0, WORLD_STRIDE*GRID_SIZE, WORLD_STRIDE*GRID_SIZE);
+		debugDrawWorld();
 // @endif
 		
 		var timeStamp1 = new Date().getTime();
 		updatePlayer(targetFrameTime);
 
 		debugAnimateBars(now);
-// @ifdef DEBUG
-		debugDrawWorld();
-// @endif
-
-
 		renderWorld();
-		//renderSprites();
-
+		renderSprites();
 		loadColorTexture(buffer8);
 		loadDepthTexture(depthBuffer);
-		
-
 		drawGL();
+
 		var timeStamp2 = new Date().getTime();
 	
 		// @ifdef STATS
@@ -266,17 +258,16 @@ function initialize() {
 	imgTexture.src = "images/example1.png";
 	generateMap();
 
-	var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
-	canvas.width = window.innerWidth;
-	canvas.height = ~~(canvas.width / aspect);
-	
+		resizeViewport();
 	// @ifdef DEBUG
-		canvas.width = 300;
+		var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
+		canvas.width = 600;
 		canvas.height = ~~(canvas.width / aspect);
 		canvas.style.float = "right";
+		initGL(canvas);
 	// @endif
 
-	initGL(canvas);
+	//initGL(canvas);
 	initInputEvents();
 
 	window.addEventListener("resize", resizeViewport);

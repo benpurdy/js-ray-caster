@@ -23,7 +23,7 @@ function generateMap() {
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0, 58,  0,  0,  0, 35,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0, 33,  0, 33,  0, 32,  0,  0,  0,  0,  0,  0,  0, 40,
-		40,  0, 33,  0,  0,  0, 58,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0, 33,  0,  0,  0, 58,  0,  0,  0, 57,  0,  0,  0, 40,
 		40, 58, 33, 59, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
@@ -34,6 +34,26 @@ function generateMap() {
 		40,  0,  0,  0,  0,  0,  0, 34,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40, 40, 41, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+	];
+
+	var emptyWorld = [
+		40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40, 40, 41, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 59,
 	];
 
 
@@ -108,8 +128,9 @@ function generateMap() {
 
 		// Set up pairs of vectors for each wall segment to use for 
 		// intersection testing later on.
-		var x = i%WORLD_STRIDE;
-		var y = ~~(i/WORLD_STRIDE);
+
+		var x = i % WORLD_STRIDE;
+		var y = ~~(i / WORLD_STRIDE);
 		var faceVectors = [];
 		var offsets = [
 			[0,0, 1,0],
@@ -117,6 +138,7 @@ function generateMap() {
 			[1,1, 0,1],
 			[0,1, 0,0]
 		];
+		
 		for(var f = 0; f < 4; f++) {
 			var fx =  (offsets[f][0] + x) * GRID_SIZE;
 			var fy =  (offsets[f][1] + y) * GRID_SIZE;
@@ -132,8 +154,7 @@ function generateMap() {
 			textureIndex: tmpWorld[i],
 			flags: 				flags,
 			walkableface: walkableface,
-			frontface: 		visibleface,
-			backface: 		visibleface,
+			visibleface:  visibleface,
 			usableface:   usableface,
 			faceVectors:  faceVectors,
 			texOffsetX:   0,
@@ -141,17 +162,17 @@ function generateMap() {
 		});
 	}
 
-	for(var i = 0; i < 20; i++) {
+	for(var i = 0; i < 15; i++) {
 		var x = 0;
 		var y = 0;
 		var found = false;
-		var area = ((WORLD_STRIDE-2) * GRID_SIZE) + GRID_SIZE;
+		var area = ((WORLD_STRIDE-3) * GRID_SIZE) + GRID_SIZE;
 
 		while(!found) {
-		  x = randomInt(area)
-			y = randomInt(area);
+		  x = randomInt(area) + GRID_SIZE/2;
+			y = randomInt(area) + GRID_SIZE/2;
 			
-			if(isWalkable(getWorld(x, y))){
+			if(isWalkable(world[getWorld(x, y)].flags)){
 				found = true;
 			}
 		}
@@ -176,8 +197,9 @@ function getWorld(x, y){
 	var tx = ~~(x / GRID_SIZE);
 	var ty = ~~(y / GRID_SIZE);
 
+
 	if((tx >= WORLD_STRIDE) || (ty >= WORLD_STRIDE) || (tx < 0) || (ty < 0)) {
-		return 0;
+		return -1;
 	}
 
 	return  tx + ty * WORLD_STRIDE;
@@ -203,12 +225,22 @@ function intersectSides(tile, x1,y1, x2,y2) {
 }
 
 // @ifdef DEBUG
+
+function debugDrawWorldGrid(){
+	ctxd.fillStyle = "#d0d0d0";
+	for(var i = 0; i < WORLD_STRIDE; i++) {
+		ctxd.fillRect(i*GRID_SIZE, 0, 1, GRID_SIZE*WORLD_STRIDE);
+		ctxd.fillRect(0, i*GRID_SIZE, GRID_SIZE*WORLD_STRIDE, 1);
+	}
+}
+
+
 function debugDrawWorld() {
 
-	ctxd.fillStyle = "#c0c0c0";
+	ctxd.fillStyle = "#ffffff";
 	ctxd.strokeStyle = "black";
 
-	ctxd.fillRect(0, 0, canvasD.width, canvasD.height);
+	ctxd.fillRect(0, 0, GRID_SIZE*WORLD_STRIDE, GRID_SIZE*WORLD_STRIDE);
 	
 	var walls = [
 		[0,0, 1,0], // N 
@@ -216,37 +248,37 @@ function debugDrawWorld() {
 		[0,1, 1,1], // S
 		[0,0, 0,1]  // W
 	];
-	var boxSize = 32;
+
 
 	for(var y = 0; y < WORLD_STRIDE; y++) {
 		for(var x = 0; x < WORLD_STRIDE; x++) {
 			
 			var tileId = x + y * WORLD_STRIDE;
-			var px = x * boxSize;
-			var py = y * boxSize;
+			var px = x * GRID_SIZE;
+			var py = y * GRID_SIZE;
 			
 			if(isVisible(world[tileId].flags)){
 				var transparent = isTransparent(world[tileId].flags);
 				
 				
-				ctxd.fillStyle = transparent ? "#86bcca" : "#695628";
-				ctxd.fillRect(x * 32,y * 32, 32, 32);
+				ctxd.fillStyle = transparent ? "#d0d0d0" : "#695628";
+				ctxd.fillRect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE);
 
 				if(transparent) {
-					ctxd.strokeStyle = "#557780";
+					ctxd.strokeStyle = "#5d2b1b";
 					ctxd.lineWidth = 2;
 					ctxd.beginPath();
 
 					ctxd.save();
-					ctxd.translate(px + boxSize/2, py + boxSize/2);
+					ctxd.translate(px + GRID_SIZE / 2, py + GRID_SIZE / 2);
 							
 					for(var i = 0; i < walls.length; i++){
 						
-						if( (world[tileId].frontface & (1<<i)) != 0 ) {
+						if( (world[tileId].visibleface & (1<<i)) != 0 ) {
 							ctxd.save();
 							ctxd.rotate(HALF_PI * (i-1));
-							ctxd.moveTo( boxSize/2 - 2, -boxSize/2);
-							ctxd.lineTo( boxSize/2 - 2, boxSize/2);
+							ctxd.moveTo( GRID_SIZE / 2 - 2, -GRID_SIZE / 2);
+							ctxd.lineTo( GRID_SIZE / 2 - 2, GRID_SIZE / 2);
 							ctxd.restore();
 						}
 					}
@@ -258,7 +290,7 @@ function debugDrawWorld() {
 
 				if(!isWalkable(world[tileId].flags)) {
 					ctxd.strokeStyle = "#202020";
-					ctxd.strokeRect(px + 1, py + 1, 30, 30);
+					ctxd.strokeRect(px + 1, py + 1, GRID_SIZE-2, GRID_SIZE-2);
 				}
 			}
 		}
@@ -295,9 +327,9 @@ function debugAnimateBars(now) {
 	var target = world[barsTile].isOpen ? 0.95 : 0.00;
 	
 	if(world[barsTile].isOpen) {
-		world[barsTile].texOffsetX = Math.min(target, world[barsTile].texOffsetX + 0.05);
+		world[barsTile].texOffsetX = Math.min(target, world[barsTile].texOffsetX + 0.035);
 	} else {
-		world[barsTile].texOffsetX = Math.max(target, world[barsTile].texOffsetX - 0.05);
+		world[barsTile].texOffsetX = Math.max(target, world[barsTile].texOffsetX - 0.035);
 	}
 	
 	if(world[barsTile].texOffsetX > 0.8){
