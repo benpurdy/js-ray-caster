@@ -151,14 +151,17 @@ function updatePlayer(delta) {
 	playerX += playerXDelta * delta;
 	playerY += playerYDelta * delta;
 
-
-	// @ifdef STATS
 	var tx = ~~(playerX / GRID_SIZE);
 	var ty = ~~(playerY / GRID_SIZE);
 	var currentTile = getWorld(playerX, playerY);
+
+	playerHeight += ((32 + world[currentTile].floorHeight) - playerHeight) * 0.23;
+
+	// @ifdef STATS
 	stats.playerTileId = currentTile;
 	stats.playerPosition = tx + ", " + ty;
-	// @endif
+
+// @endif
 
 	// player head-bob
 	/*	
@@ -202,7 +205,7 @@ function update(now) {
 
 		debugAnimateBars(now);
 		renderWorld();
-		renderSprites();
+		//renderSprites();
 		loadColorTexture(buffer8);
 		loadDepthTexture(depthBuffer);
 		drawGL();

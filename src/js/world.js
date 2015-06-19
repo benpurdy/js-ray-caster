@@ -155,7 +155,7 @@ function generateMap() {
 		var tileY = ~~(textureIndex / 8);
 		var textureOffset = (tileX * TILE_SIZE) + ((tileY * TILE_SIZE) * TEXTURE_SIZE);
 
-		var floor = randomInt(2) + 39;
+		var floor = (tmpWorld[i] == 0) && (Math.random() > 0.75) ? 40 : 39;
 
 		world.push({
 			floorcolor: floorcolor,
@@ -173,7 +173,9 @@ function generateMap() {
 			ceilingTexture: 41,
 			tileTextureOffset: getPixelIndexForTexture(tmpWorld[i]),
 			ceilingTextureOffset: getPixelIndexForTexture(41),
+			floorHeight: (floor == 40) ? -6 : 0,
 			floorTextureOffset: getPixelIndexForTexture(floor)
+
 		});
 	}
 
