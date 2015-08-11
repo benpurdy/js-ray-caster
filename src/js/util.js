@@ -1,3 +1,16 @@
+var debugColors = [0xa00000, 0x300000];//, 0x0000ff, 0xffff00, 0x00ffff, 0x0000ff, 0xffffff, 0xff8800, 0xffff88, 0x88ff00];
+var debugFloorColors = [0xc0c0c0, 0xa000a0];//, 0x0000ff, 0xffff00, 0x00ffff, 0x0000ff, 0xffffff, 0xff8800, 0xffff88, 0x88ff00];
+var debugLowerColors = [0x00a000, 0x005000];//, 0x0000ff, 0xffff00, 0x00ffff, 0x0000ff, 0xffffff, 0xff8800, 0xffff88, 0x88ff00];
+function getDebugColor(idx){
+	return debugColors[idx % debugColors.length];
+}
+function getDebugLowerColor(idx){
+	return debugLowerColors[idx % debugLowerColors.length];
+}
+function getDebugFloorColor(idx){
+	return debugFloorColors[idx % debugFloorColors.length];
+}
+
 var PI_OVER_180 = Math.PI / 180;
 var _180_OVER_PI = 180 / Math.PI;
 var HALF_PI = Math.PI / 2;

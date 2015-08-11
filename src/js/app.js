@@ -114,7 +114,7 @@ imgTexture.addEventListener("load", function() {
 	var tempContext = tempCanvas.getContext("2d");
 
 	currentTex = imgTexture;
-	//console.log("Texture loaded");
+	console.log("Texture loaded: ", imgTexture.width, imgTexture.height);
 	
 	tempContext.clearRect(0, 0, imgTexture.width, imgTexture.height);
 	tempContext.drawImage(currentTex, 0, 0);
@@ -130,6 +130,7 @@ imgTexture.addEventListener("load", function() {
 		textureLookup32[i] = (a<<24) | r | (g << 8) | (b << 16);
 	}
 });
+
 
 
 function updatePlayer(delta) {
@@ -155,6 +156,7 @@ function updatePlayer(delta) {
 	var ty = ~~(playerY / GRID_SIZE);
 	var currentTile = getWorld(playerX, playerY);
 
+	
 	playerHeight += ((32 + world[currentTile].floorHeight) - playerHeight) * 0.23;
 
 	// @ifdef STATS
@@ -205,7 +207,7 @@ function update(now) {
 
 		debugAnimateBars(now);
 		renderWorld();
-		//renderSprites();
+		renderSprites();
 		loadColorTexture(buffer8);
 		loadDepthTexture(depthBuffer);
 		drawGL();
@@ -267,7 +269,7 @@ function initialize() {
 		resizeViewport();
 	// @ifdef DEBUG
 		var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
-		canvas.width = 600;
+		canvas.width = 800;
 		canvas.height = ~~(canvas.width / aspect);
 		canvas.style.float = "right";
 		initGL(canvas);

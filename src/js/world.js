@@ -27,8 +27,8 @@ function generateMap() {
 		40, 58, 33, 59, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
-		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
-		40,  0,  0,  0,  0,  0,  0, 58,  0, 57, 57, 34, 35,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0, 57,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0, 58,  0, 57,  0, 34, 35,  0, 40,
 		40,  0,  0,  0,  0,  0,  0, 33,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0, 32,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0, 34,  0,  0,  0,  0,  0,  0, 40,
@@ -36,7 +36,7 @@ function generateMap() {
 		40, 40, 41, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
 	];
 
-	var emptyWorld = [
+	var tmpWo3rld = [
 		40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
@@ -45,12 +45,12 @@ function generateMap() {
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40, 57, 57, 57, 57, 57,  0, 57, 57, 57, 57, 57, 57, 57, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
-		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
-		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
-		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
-		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0, 57, 57, 57,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0, 57, 57, 57,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0, 57, 57, 57,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40, 40, 41, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 59,
@@ -59,8 +59,8 @@ function generateMap() {
 
 	// randomize edge walls for more interestingness.
 	for(var i = 0; i < WORLD_STRIDE; i++) {
-		tmpWorld[i] = randomInt(6) + 40;
-		tmpWorld[i*WORLD_STRIDE] = randomInt(6) + 40;
+		tmpWorld[i] = 32;//randomInt(6) + 40;
+		tmpWorld[i*WORLD_STRIDE] = 32;//randomInt(6) + 40;
 		tmpWorld[i*WORLD_STRIDE+(WORLD_STRIDE-1)] = randomInt(6) + 40;
 		tmpWorld[WORLD_STRIDE*(WORLD_STRIDE-1)+i] = randomInt(6) + 40;
 	}
@@ -74,6 +74,7 @@ function generateMap() {
 		var visibleface = 0;
 		var walkableface = 0;
 		var usableface = 0;
+		var textureIndex = tmpWorld[i];
 
 		var floorcolor = randomInt(80)+60 + ((randomInt(80)+60) << 8) + ((randomInt(80)+60) << 16);
 
@@ -121,12 +122,13 @@ function generateMap() {
 
 			visibleface = TILE_FACE_ALL;
 			walkableface = 0;
-		
+			//tmpWorld[i] = 57;
 		}
 
 		if(tmpWorld[i] == 0) { // make empty spaces walkable.
 			flags = TILE_FLAGS_WALKABLE;
 			walkableface = TILE_FACE_ALL;
+			textureIndex = 40;
 		}
 
 		// Set up pairs of vectors for each wall segment to use for 
@@ -150,34 +152,52 @@ function generateMap() {
 
 			faceVectors.push( [new Vec2(fx, fy), new Vec2(fx2,fy2)] );
 		}
+
+		/*
 		var textureIndex = tmpWorld[i];
 		var tileX = textureIndex % 8;
 		var tileY = ~~(textureIndex / 8);
 		var textureOffset = (tileX * TILE_SIZE) + ((tileY * TILE_SIZE) * TEXTURE_SIZE);
+		*/
 
-		var floor = (tmpWorld[i] == 0) && (Math.random() > 0.75) ? 40 : 39;
+		var isLava = ((tmpWorld[i] == 0) && (randomInt(3) == 0));
+		var floor =  isLava ? 64 : 39;
+		var floorHeight = 0;
+		if(isLava){
+			floor = 40;
+			visibleface = 0;
+			flags = TILE_FLAGS_WALKABLE;
+			walkableface = TILE_FACE_ALL;
+			textureIndex = 40;
+			floorHeight = (randomInt(6) - 3) * 8;
+			if(floorHeight < -8){
+				floor = 64;
+			}
+		}
 
 		world.push({
 			floorcolor: floorcolor,
 			gridx : x,
 			gridy : y,
-			flags: 				flags,
+			flags : flags,
 			walkableface: walkableface,
-			visibleface:  visibleface,
-			usableface:   usableface,
-			faceVectors:  faceVectors,
-			texOffsetX:   0,
-			texOffsetY:   0,
-			textureIndex: tmpWorld[i],
+			visibleface: visibleface,
+			usableface: usableface,
+			faceVectors: faceVectors,
+			texOffsetX: 0,
+			texOffsetY: 0,
+			textureIndex: textureIndex,
 			floorTexture: floor,
 			ceilingTexture: 41,
-			tileTextureOffset: getPixelIndexForTexture(tmpWorld[i]),
+			tileTextureOffset: getPixelIndexForTexture(textureIndex),
 			ceilingTextureOffset: getPixelIndexForTexture(41),
-			floorHeight: (floor == 40) ? -6 : 0,
+			floorHeight: floorHeight,
 			floorTextureOffset: getPixelIndexForTexture(floor)
-
 		});
 	}
+
+
+	// Add sprites
 
 	for(var i = 0; i < 15; i++) {
 		var x = 0;
@@ -211,8 +231,8 @@ function getWorld(x, y){
 	// @ifdef STATS
 	stats.counters.getWorld++;
 	// @endif
-	var tx = ~~(x / GRID_SIZE);
-	var ty = ~~(y / GRID_SIZE);
+	var tx = ~~(~~x / GRID_SIZE);
+	var ty = ~~(~~y / GRID_SIZE);
 
 
 	if((tx >= WORLD_STRIDE) || (ty >= WORLD_STRIDE) || (tx < 0) || (ty < 0)) {

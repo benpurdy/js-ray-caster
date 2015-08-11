@@ -144,101 +144,150 @@ function renderSprites() {
 	// @endif
 }
 
-function drawSlice(viewX, eyeHeight, slice, angle, correctedDistance, drawFloor) {
+function drawSlice(viewX, eyeHeight, slice, angle, correctedDistance, yClip, backPhase) {
 	
-	//var correctedDistance = slice.distance * Math.cos(-halfFov + i * step);
-	
+	var result = {
+		wallTop: 0,
+		floorStart: VIEWPORT_HEIGHT,
+		floorStop: VIEWPORT_HEIGHT
+	};
+
 	var tile = world[slice.tileId];
-	//var tileX = tile.textureIndex % 8;
-	//var tileY = ~~(tile.textureIndex / 8);
-	
+
 	var texCoordX = slice.sampleX + slice.texOffsetX;
-
-	if((texCoordX > 1) || (texCoordX < 0)){
-		return;
-	}
-
-	var textureOffset = tile.tileTextureOffset;//(tileX * TILE_SIZE) + (tileY * TILE_SIZE) * TEXTURE_SIZE;
-
-  var sliceHeight = ~~(GRID_SIZE / correctedDistance * distanceToProjectionPlane);
-
-  var halfSlice =	~~(sliceHeight / 2);
 	
-	var viewOffsetY = ~~(eyeHeight / correctedDistance * distanceToProjectionPlane);
+	
 
-	var y1 = (halfViewHeight - halfSlice - viewOffsetY);
-	var y2 = Math.ceil(halfViewHeight + halfSlice - viewOffsetY)+1;
-	sliceHeight = y2-y1;
+	var ceiling = GRID_SIZE;
+	var floor = slice.floorHeight;
+	var backFloor = slice.backFloorHeight;
+	
+	var textureScaleY = (ceiling - floor) / GRID_SIZE;
+
+	ceiling = halfViewHeight - ((ceiling - eyeHeight) / correctedDistance * distanceToProjectionPlane);
+  floor = halfViewHeight - ((floor - eyeHeight) / correctedDistance * distanceToProjectionPlane);
+	backFloor = halfViewHeight - ((backFloor - eyeHeight) / correctedDistance * distanceToProjectionPlane);  
+
+	result.floorStop = (backFloor < floor) ? ~~backFloor : ~~floor;
+	result.floorStart = (backFloor < floor) ? ~~backFloor : ~~floor;
+
+	var y1 = ~~ceiling;
+	var y2 = ~~(floor);
+
+	var sliceDist = Math.sqrt(slice.distance);
+
+	sliceHeight = y2 - y1;
 	
 	if(!slice.hasFace) {
 		y1 = y2;
 	}
 
-	// clip to viewport
 	var y = Math.max(y1, 0);
 	var stop = Math.min(y2, VIEWPORT_HEIGHT);
 	
+	result.wallTop = y2;
+	if(!slice.transparent){
+		result.wallTop = y;
+	}
+
 	var idx;
-
-	//var textureX = tile.texOffsetX; // + backTile.textureOffsetX,;
-	var textureY;
-	
-
-	textureOffset += ~~(texCoordX * TILE_SIZE);
-	
-	while(y < stop) {
-
-		textureY = (y - y1) / sliceHeight;
-		textureY = ~~(textureY * TILE_SIZE);
+	if(((texCoordX >= 0) && (texCoordX < 1)) && ((!slice.isBackface && !slice.transparent) || backPhase) ){
+		var textureY;
 		
-		idx = viewX + ~~y * BUFFER_WIDTH;
-		textureSample = textureLookup32[textureOffset + textureY * TEXTURE_SIZE];
+		var textureOffset = tile.tileTextureOffset;
+		var textureX = ~~(texCoordX * TILE_SIZE);
 		
-		if( (textureSample & 0xff000000) != 0) {
-			buffer32[idx] = textureSample;
-			depthBuffer[idx] = Math.sqrt(slice.distance);
-		}
+		stop = Math.min(stop, yClip);
 		
-		y++;
-	}
-
-	if(drawFloor){
-		castCeiling(y1, viewX, angle);
-		castFloor(y2, viewX, angle);
-	}
-
-	if(slice.hasLower) {
-		var lowerHeight = ~~(slice.lower / correctedDistance * distanceToProjectionPlane);
-		y1 = y2;
-		
-		y2 += lowerHeight;
-		y = Math.max(y1, 0);
-		stop = Math.min(y2, VIEWPORT_HEIGHT);
-
-		textureOffset = tile.ceilingTextureOffset;
-		textureOffset += ~~(texCoordX * TILE_SIZE);
-
 		while(y < stop) {
 
-			textureY = (y - y1) / lowerHeight;
-			textureY = ~~(textureY * TILE_SIZE);
+			textureY = 1 - (y2 - y) * textureScaleY / sliceHeight;
+			textureY = ~~(Math.max(0,Math.min(textureY, 1)) * TILE_SIZE);
+			
+
+			var color = 0xff000000 + ~~(textureY * 8) + (~~(textureX * 8) << 8);
 			
 			idx = viewX + ~~y * BUFFER_WIDTH;
-			textureSample = textureLookup32[textureOffset + textureY * TEXTURE_SIZE];
 			
-			if( (depthBuffer[idx] > Math.sqrt(slice.distance)) && (textureSample & 0xff000000) != 0) {
+			textureSample = textureLookup32[textureOffset + textureX + textureY * 512];
+			
+			//if(backPhase || slice.transparent) {
+			////	buffer32[idx] = slice.isBackface ? 0x00ff00 : 0xff0000;
+			//	depthBuffer[idx] = sliceDist;
+			//} else 
+			if((textureSample & 0xff000000) != 0) {
 				buffer32[idx] = textureSample;
-				depthBuffer[idx] = Math.sqrt(slice.distance);
+				//buffer32[idx] = getDebugColor(slice.tileId);
+				//buffer32[idx] = 0xff + (textureY*8);
+				depthBuffer[idx] = sliceDist;
 			}
 			
 			y++;
 		}
 	}
+//	result.floorStart = stop;
+
+
+	// draw LOWER wall.
+	if(!backPhase && !slice.isBackface && (slice.floorHeight > slice.backFloorHeight) ) {
+		
+
+	  var lowerHeight = (slice.floorHeight - slice.backFloorHeight);		
+	  var textureScale = lowerHeight / GRID_SIZE;
+		
+		lowerHeight = ~~(lowerHeight / correctedDistance * distanceToProjectionPlane);
+		
+		y = Math.max(y2-1, 0);
+		
+		y2 = y2 + lowerHeight;
+
+		//result.wallTop = y;
+		result.floorStop = y;
+
+		stop = Math.min(y2, VIEWPORT_HEIGHT);
+		
+		texCoordX = slice.sampleX + slice.backTexOffsetX;
+		textureOffset = slice.backTileTextureOffset;
+		textureOffset += ~~(texCoordX * TILE_SIZE);
+		
+		stop = Math.min(yClip, stop);
+		
+		if(slice.transparent) {
+			result.wallTop = y;
+		}
+
+		while((y < stop) ) {
+
+			textureY = (1 - (y2 - y) / lowerHeight) * textureScale;
+			textureY = ~~(Math.min(textureY, 1) * TILE_SIZE);
+			
+			idx = viewX + ~~y * BUFFER_WIDTH;
+			textureSample = textureLookup32[textureOffset + textureY * TEXTURE_SIZE];
+
+			//if(depthBuffer[idx] > sliceDist) {
+				//if(backPhase){
+				//	textureSample = 0xff000000 + (~~(texCoordX * 8) << 16) + (~~(textureY * 8));
+			buffer32[idx] = textureSample
+			//buffer32[idx] = getDebugLowerColor(slice.tileId);
+			depthBuffer[idx] = sliceDist;
+				//}
+		//	}
+			
+			y++;
+		} 
+
+		result.floorStart = stop;
+	}
+
+	return result;
 }
 
 function getPixelIndexForTexture(textureIndex) {
-
-	return ((textureIndex % 16) * TILE_SIZE) + (~~(textureIndex / 16) * TILE_SIZE) * TEXTURE_SIZE;
+	var ty = ~~(textureIndex / 16);
+	var tx = textureIndex - (ty * 16);
+	console.log(textureIndex, tx, ty);
+	return (tx * TILE_SIZE ) + ((ty * TILE_SIZE ) * TEXTURE_SIZE);
+	//return ((textureIndex % 16) * TILE_SIZE) + (~~(textureIndex / 16) * TILE_SIZE) * TEXTURE_SIZE;
 }
 
 function debugClearBuffers() {
@@ -247,8 +296,8 @@ function debugClearBuffers() {
 	for(y = 0; y < VIEWPORT_HEIGHT; y++){
 		for(x = 0; x < VIEWPORT_WIDTH; x++){
 			idx = x+y*BUFFER_WIDTH;
-			buffer32[idx] = 0;
-			depthBuffer[idx] = 100000000;
+			buffer32[idx] = 0xff00ff;
+			depthBuffer[idx] = 100000000000;
 		}
 	}
 }
@@ -346,7 +395,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		testY = ~~(startY / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
 		testX = startX + (testY - startY) / tanAngle;
 
-		tileTestOffsetY = 0.1;
+		tileTestOffsetY = 0.01;
 		backfaceTestY = -1;
 
 		faceBitsFrontHorizontal = TILE_FACE_N;
@@ -407,7 +456,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		testX = ~~(startX / GRID_SIZE) * GRID_SIZE + GRID_SIZE;
 		testY = startY + (testX - startX) * tanAngle;
 
-		tileTestOffsetX = 0.1;
+		tileTestOffsetX = 0.01;
 		backfaceTestX = -1;
 		
 		faceBitsFrontVertical = TILE_FACE_W;
@@ -475,20 +524,14 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		slice.distance = hDist;
 		slice.texOffsetX = tile.texOffsetX;
 		slice.hitType = 1;
-		
+		slice.isBackface = false;
 
 		faceBitsFront = faceBitsFrontHorizontal;
 		faceBitsBack = faceBitsBackHorizontal;
 
 		backTile = backTileH;
 		backTileId = backTileHId;
-
-		floorOffset = backTile.floorHeight - tile.floorHeight;
-
-		slice.hasLower = (backTile.floorHeight < tile.floorHeight);
-		slice.lower = Math.abs(floorOffset);
-		slice.hasFace = ((tile.visibleface & faceBitsFront) != 0);
-
+	
 		if(invertTextureCoordsH) {
 			slice.sampleX = 1.0 - slice.sampleX;
 		}
@@ -499,12 +542,12 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 
 		tile = world[vtile];
 
-		slice.sampleX =  (vy % GRID_SIZE) / GRID_SIZE;
+		slice.sampleX = (vy % GRID_SIZE) / GRID_SIZE;
 		slice.tileId = vtile;
 		slice.distance = vDist;
 		slice.texOffsetX = tile.texOffsetX;
 		slice.hitType = 2;
-		
+		slice.isBackface = false;
 
 		faceBitsFront = faceBitsFrontVertical;
 		faceBitsBack  = faceBitsBackVertical;
@@ -512,15 +555,24 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		backTile = backTileV;
 		backTileId = backTileVId;
 
-		floorOffset = backTile.floorHeight - tile.floorHeight;
-		slice.hasFace = ((tile.visibleface & faceBitsFront) != 0);
-		slice.hasLower = (backTile.floorHeight < tile.floorHeight);
-		slice.lower = Math.abs(floorOffset);
 
 		if(invertTextureCoordsV) {
 			slice.sampleX = 1.0 - slice.sampleX;
 		}
 	}	
+
+
+	var floorOffset = tile.floorHeight; - backTile.floorHeight;
+
+	slice.hasFace = ((tile.visibleface & faceBitsFront) != 0);
+	slice.hasLower = (backTile.floorHeight < tile.floorHeight);
+	slice.lower = floorOffset;
+
+	slice.floorHeight = tile.floorHeight;
+	slice.backFloorHeight = backTile.floorHeight;
+	slice.transparent = isTransparent(tile.flags);
+	slice.backTileTextureOffset = backTile.tileTextureOffset;
+	slice.backTexOffsetX = backTile.texOffsetX;
 
 	if(!tile && !backTile) {
 		return;
@@ -528,9 +580,10 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 
 	var keepTracing = false;
 
-	if( backTile ) {
+	if( backTile && ((backTile.visibleface & faceBitsBack) != 0)) {
 		
 			var backSlice = {
+				isBackface : true,
 				hasLower : false,
 				hasFace : ((backTile.visibleface & faceBitsBack) != 0),
 				lower: 0,
@@ -538,27 +591,32 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 				sampleX: 1.0 - slice.sampleX,
 				tileId: backTileId,
 				texOffsetX: backTile.texOffsetX,
+				backTexOffsetX : backTile.texOffsetX,
 				distance: slice.distance - 1,
-				transparent: isTransparent(backTile.flags)
+				transparent: isTransparent(backTile.flags),
+				floorHeight:0
 			};
 
 			result.push(backSlice);
+
 			keepTracing = true;
 	}
 
-	if((tile && isVisible(tile.flags)) || slice.hasLower){
+
+	//if((tile && isVisible(tile.flags)) || slice.hasLower){
 		//if((tile.visibleface & faceBitsFront) != 0){
-			result.push(slice);
+	
+		result.push(slice);
+	
 		//}
 
-		slice.transparent = isTransparent(tile.flags);
 		
 		if(slice.transparent || !slice.hasFace) {
 			keepTracing = true;
 		}	else{
 			keepTracing = false;
 		}
-	}
+//	}
 	
 	if(keepTracing) {
 		castRayRecursive( originX, originY, nextRayStartX, nextRayStartY, angle, result, maxSteps-1);
@@ -579,8 +637,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 var offsetPlayerX;
 var offsetPlayerY;
 
-function castFloor(startY, screenX, angle) {
-
+function castFloor(startY, stopY, screenX, angle, floorHeight, startTile) {
 	var cosAngle = Math.cos(angle);
 	
 	var cosViewAngle = Math.cos(angle + playerDirection);
@@ -598,36 +655,34 @@ function castFloor(startY, screenX, angle) {
 
 	var tileIndex;
 	var tile;
-	var color;
 	var sampleIndex = 0;
+
 	
-	for(var y = startY; y < VIEWPORT_HEIGHT; y++) {
+	for(var y = startY; y < stopY; y++) {
 		
-		paralellDistanceToFloor = (playerHeight / (y - halfViewHeight)) * distanceToProjectionPlane;
+		paralellDistanceToFloor = ((playerHeight - floorHeight) / ((y+1) - halfViewHeight)) * distanceToProjectionPlane;
 		distanceToFloor = paralellDistanceToFloor / cosAngle;
 
-		gx = ~~(distanceToFloor * cosViewAngle + offsetPlayerX);
-		gy = ~~(distanceToFloor * sinViewAngle + offsetPlayerY);
+		gx = (distanceToFloor * cosViewAngle + offsetPlayerX);
+		gy = (distanceToFloor * sinViewAngle + offsetPlayerY);
+		
+		var tileId = getWorld(gx, gy);
 		tile = world[getWorld(gx, gy)];
 		
 		if(tile) {
-			paralellDistanceToFloor = ((playerHeight - tile.floorHeight) / (y - halfViewHeight)) * distanceToProjectionPlane;
-			distanceToFloor = paralellDistanceToFloor / cosAngle;
 
-			gx = ~~(distanceToFloor * cosViewAngle + offsetPlayerX);
-			gy = ~~(distanceToFloor * sinViewAngle + offsetPlayerY);
-			
 			texX = ~~(gx % GRID_SIZE / 2); 
 			texY = ~~(gy % GRID_SIZE / 2);
-
 			
-			sampleIndex = tile.floorTextureOffset + texX + (texY * TEXTURE_SIZE);
+			pixelIndex = ((y) * BUFFER_WIDTH) + screenX;
 
-			color = textureLookup32[sampleIndex];
-			pixelIndex = (y * BUFFER_WIDTH) + screenX;
-
-			buffer32[pixelIndex] = color;
-			depthBuffer[pixelIndex] = ~~distanceToFloor;
+		//	if(depthBuffer[pixelIndex] > ~~distanceToFloor) {
+				sampleIndex = tile.floorTextureOffset + texX + (texY * TEXTURE_SIZE);
+				//buffer32[pixelIndex] = 0xff0000 + getDebugColor(tileId);//textureLookup32[sampleIndex];
+				buffer32[pixelIndex] = textureLookup32[sampleIndex];
+				//buffer32[pixelIndex] = getDebugFloorColor(tileId);
+				depthBuffer[pixelIndex] = ~~distanceToFloor;
+		//	}
 		}
 	}
 }
@@ -686,7 +741,7 @@ function renderWorld() {
 	// @endif
 
 // @ifdef DEBUG
-	//debugClearBuffers();
+	debugClearBuffers(); // Don't leave this enabled.. it can hide z-order bugs.
 	debugDrawWorldGrid();
 // @endif
 
@@ -702,7 +757,7 @@ function renderWorld() {
 	
 	var result = [];
 
-	var eyeHeight = (GRID_SIZE / 2) - playerHeight;
+	var eyeHeight =  playerHeight;
 	var viewOffsetY;
 	var slice;
 	var r;
@@ -727,16 +782,63 @@ function renderWorld() {
 		cosSliceAngle = Math.cos(-halfFov + i * step + halfStep);
 		castRayRecursive(offsetPlayerX, offsetPlayerY, offsetPlayerX, offsetPlayerY, rayAngle, result, 32);
 	
-		for(r = result.length - 1; r >= 0; r--) {
+		var floorStop = VIEWPORT_HEIGHT;
+		var ceilingStart = VIEWPORT_HEIGHT;
+		var sliceBoundaries = {
+			floorStop : VIEWPORT_HEIGHT,
+			wallTop : VIEWPORT_HEIGHT
+		};
+		// draw non-transparent walls front to back
+		for(r = 0; r < result.length; r++) {
 			slice = result[r];
-			correctedDistance = Math.sqrt(slice.distance) * cosSliceAngle;
 			
-			drawSlice(i, eyeHeight, slice, rayAngle - playerDirection, correctedDistance, (r == result.length - 1));
+			if(!slice.isBackface){
+				correctedDistance = Math.sqrt(slice.distance) * cosSliceAngle;
+				
+				 sliceBoundaries = drawSlice(i, eyeHeight, slice, rayAngle - playerDirection, correctedDistance, floorStop, false);				 
+				 slice.yClip = floorStop;	
+				
+
+				if(sliceBoundaries.floorStart > halfViewHeight) {
+					castFloor(sliceBoundaries.floorStart, floorStop, i, rayAngle - playerDirection, slice.backFloorHeight, slice.tileId);
+				}
+				
+				
+			/*
+				var pixelIndex = ((sliceBoundaries.floorStart) * BUFFER_WIDTH) + i;
+				buffer32[pixelIndex] = 0x0000ff;
+				depthBuffer[pixelIndex] = 1;
+
+				var pixelIndex = ((sliceBoundaries.floorStop) * BUFFER_WIDTH) + i;
+				buffer32[pixelIndex] = 0x00ff00;
+				depthBuffer[pixelIndex] = 1;
+
+				var pixelIndex = ((sliceBoundaries.wallTop) * BUFFER_WIDTH) + i;
+				buffer32[pixelIndex] = 0xff0000;
+				depthBuffer[pixelIndex] = 1;
+			*/	
+			}
+		
+			ceilingStart = Math.min( sliceBoundaries.wallTop, ceilingStart);
+	
+			floorStop = Math.min( Math.min(VIEWPORT_HEIGHT, sliceBoundaries.floorStop), floorStop);
+			slice.yClip = floorStop;
+		}
+
+		castCeiling(ceilingStart, i, rayAngle-playerDirection); 
+
+		// draw transparent faces back-to-front
+		for(r = result.length-1; r >= 0; r--) {
+			slice = result[r];
+			if(slice.isBackface || slice.transparent) {
+				correctedDistance = Math.sqrt(slice.distance) * cosSliceAngle;
+				drawSlice(i, eyeHeight, slice, rayAngle - playerDirection, correctedDistance, slice.yClip, true);
+			}
 		}
 	}
 
 // @ifdef DEBUG
-	debugDrawDividers();
+//	debugDrawDividers();
 // @endif
 
 }
