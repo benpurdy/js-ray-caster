@@ -171,12 +171,12 @@ function drawSlice(viewX, eyeHeight, slice, angle, correctedDistance, yClip, bac
 	result.floorStop = (backFloor < floor) ? ~~backFloor : ~~floor;
 	result.floorStart = (backFloor < floor) ? ~~backFloor : ~~floor;
 
-	var y1 = ~~ceiling;
-	var y2 = ~~(floor);
+	var y1 = ~~(ceiling);
+	var y2 = Math.ceil(floor);
 
 	var sliceDist = Math.sqrt(slice.distance);
 
-	sliceHeight = y2 - y1;
+	sliceHeight = ~~(y2 - y1);
 	
 	if(!slice.hasFace) {
 		y1 = y2;
@@ -216,10 +216,10 @@ function drawSlice(viewX, eyeHeight, slice, angle, correctedDistance, yClip, bac
 			//	depthBuffer[idx] = sliceDist;
 			//} else 
 			if((textureSample & 0xff000000) != 0) {
-				buffer32[idx] = textureSample;
+				//buffer32[idx] = textureSample;
 				//buffer32[idx] = getDebugColor(slice.tileId);
 				//buffer32[idx] = 0xff + (textureY*8);
-				depthBuffer[idx] = sliceDist;
+				//depthBuffer[idx] = sliceDist;
 			}
 			
 			y++;
@@ -231,13 +231,12 @@ function drawSlice(viewX, eyeHeight, slice, angle, correctedDistance, yClip, bac
 	// draw LOWER wall.
 	if(!backPhase && !slice.isBackface && (slice.floorHeight > slice.backFloorHeight) ) {
 		
-
-	  var lowerHeight = (slice.floorHeight - slice.backFloorHeight);		
+	  var lowerHeight = slice.floorHeight - slice.backFloorHeight;
 	  var textureScale = lowerHeight / GRID_SIZE;
 		
-		lowerHeight = ~~(lowerHeight / correctedDistance * distanceToProjectionPlane);
+		lowerHeight = (lowerHeight / correctedDistance * distanceToProjectionPlane);
 		
-		y = Math.max(y2-1, 0);
+		y = Math.max(y2, 0);
 		
 		y2 = y2 + lowerHeight;
 
@@ -256,6 +255,12 @@ function drawSlice(viewX, eyeHeight, slice, angle, correctedDistance, yClip, bac
 			result.wallTop = y;
 		}
 
+	//	y = Math.floor(floor);
+		//stop = Math.ceil(backFloor);
+		
+		result.floorStop = y;
+		result.floorStart = stop;
+
 		while((y < stop) ) {
 
 			textureY = (1 - (y2 - y) / lowerHeight) * textureScale;
@@ -266,11 +271,14 @@ function drawSlice(viewX, eyeHeight, slice, angle, correctedDistance, yClip, bac
 
 			//if(depthBuffer[idx] > sliceDist) {
 				//if(backPhase){
-				//	textureSample = 0xff000000 + (~~(texCoordX * 8) << 16) + (~~(textureY * 8));
-			buffer32[idx] = textureSample
-			//buffer32[idx] = getDebugLowerColor(slice.tileId);
+					//textureSample = 0xff000000;// + (~~(texCoordX * 8) << 16) + (~~(textureY * 8));
+					//buffer32[idx] = textureSample
+					
+			//	}
+			//if(depthBuffer[idx] > sliceDist) {
+			buffer32[idx] = getDebugLowerColor(slice.tileId);
 			depthBuffer[idx] = sliceDist;
-				//}
+			//}
 		//	}
 			
 			y++;
@@ -285,7 +293,7 @@ function drawSlice(viewX, eyeHeight, slice, angle, correctedDistance, yClip, bac
 function getPixelIndexForTexture(textureIndex) {
 	var ty = ~~(textureIndex / 16);
 	var tx = textureIndex - (ty * 16);
-	console.log(textureIndex, tx, ty);
+	//console.log(textureIndex, tx, ty);
 	return (tx * TILE_SIZE ) + ((ty * TILE_SIZE ) * TEXTURE_SIZE);
 	//return ((textureIndex % 16) * TILE_SIZE) + (~~(textureIndex / 16) * TILE_SIZE) * TEXTURE_SIZE;
 }
@@ -419,7 +427,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		if(!tile && !backTileH) {
 			break;
 		} else if(isVisible(tile.flags) || isVisible(backTileH.flags) || 
-			(tile && backTileH && (backTileH.floorHeight != tile.floorHeight) ) ) {
+			(tile && backTileH && ((backTileH.floorHeight != tile.floorHeight) || (backTileH.ceilingHeight != tile.ceilingHeight)) ) ) {
 			found = true;
 		} else {
 			testX += stepHX;
@@ -434,9 +442,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 	var hy = testY;
 	var htile = tileId;
 
-	
 // Cast for vertical walls
-
 	
 	if(cosAngle < 0) {
 		testX = ~~(startX / GRID_SIZE) * GRID_SIZE;
@@ -479,7 +485,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 		if(!tile && !backTileV) {
 			break;
 		} else if( isVisible(tile.flags) || isVisible(backTileV.flags) || 
-			(tile && backTileV && (backTileV.floorHeight != tile.floorHeight) ) ){
+			(tile && backTileV && ((backTileV.floorHeight != tile.floorHeight) || (backTileV.ceilingHeight != tile.ceilingHeight)) )){
 			found = true;
 		} else {
 			testX += stepVX;
@@ -569,7 +575,9 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 	slice.lower = floorOffset;
 
 	slice.floorHeight = tile.floorHeight;
+	slice.ceilingHeight = tile.ceilingHeight;
 	slice.backFloorHeight = backTile.floorHeight;
+	slice.backCeilingHeight = backTile.ceilingHeight;
 	slice.transparent = isTransparent(tile.flags);
 	slice.backTileTextureOffset = backTile.tileTextureOffset;
 	slice.backTexOffsetX = backTile.texOffsetX;
@@ -602,21 +610,13 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 			keepTracing = true;
 	}
 
-
-	//if((tile && isVisible(tile.flags)) || slice.hasLower){
-		//if((tile.visibleface & faceBitsFront) != 0){
+	result.push(slice);
 	
-		result.push(slice);
-	
-		//}
-
-		
-		if(slice.transparent || !slice.hasFace) {
-			keepTracing = true;
-		}	else{
-			keepTracing = false;
-		}
-//	}
+	if(slice.transparent || !slice.hasFace) {
+		keepTracing = true;
+	}	else{
+		keepTracing = false;
+	}
 	
 	if(keepTracing) {
 		castRayRecursive( originX, originY, nextRayStartX, nextRayStartY, angle, result, maxSteps-1);
@@ -634,10 +634,8 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 	// @endif
 }
 
-var offsetPlayerX;
-var offsetPlayerY;
 
-function castFloor(startY, stopY, screenX, angle, floorHeight, startTile) {
+function castFloor(viewX, viewY, startY, stopY, screenX, angle, floorHeight, startTile) {
 	var cosAngle = Math.cos(angle);
 	
 	var cosViewAngle = Math.cos(angle + playerDirection);
@@ -663,8 +661,8 @@ function castFloor(startY, stopY, screenX, angle, floorHeight, startTile) {
 		paralellDistanceToFloor = ((playerHeight - floorHeight) / ((y+1) - halfViewHeight)) * distanceToProjectionPlane;
 		distanceToFloor = paralellDistanceToFloor / cosAngle;
 
-		gx = (distanceToFloor * cosViewAngle + offsetPlayerX);
-		gy = (distanceToFloor * sinViewAngle + offsetPlayerY);
+		gx = (distanceToFloor * cosViewAngle + viewX);
+		gy = (distanceToFloor * sinViewAngle + viewY);
 		
 		var tileId = getWorld(gx, gy);
 		tile = world[getWorld(gx, gy)];
@@ -678,8 +676,8 @@ function castFloor(startY, stopY, screenX, angle, floorHeight, startTile) {
 
 		//	if(depthBuffer[pixelIndex] > ~~distanceToFloor) {
 				sampleIndex = tile.floorTextureOffset + texX + (texY * TEXTURE_SIZE);
-				//buffer32[pixelIndex] = 0xff0000 + getDebugColor(tileId);//textureLookup32[sampleIndex];
-				buffer32[pixelIndex] = textureLookup32[sampleIndex];
+				buffer32[pixelIndex] = (texX * 8) + ((texY*8) << 8) + getDebugFloorColor(tileId);//textureLookup32[sampleIndex];
+				//buffer32[pixelIndex] = textureLookup32[sampleIndex];
 				//buffer32[pixelIndex] = getDebugFloorColor(tileId);
 				depthBuffer[pixelIndex] = ~~distanceToFloor;
 		//	}
@@ -687,16 +685,13 @@ function castFloor(startY, stopY, screenX, angle, floorHeight, startTile) {
 	}
 }
 
+function drawCeiling(viewX, viewY, eyeHeight, startY, stopY, screenX, angle, cosAngle, ceilingHeight) {
+	
+	var cosViewAngle = Math.cos(angle);// + playerDirection);
+	var sinViewAngle = Math.sin(angle);// + playerDirection);
 
-function castCeiling(stopY, screenX, angle) {
-	var cosAngle = Math.cos(angle);
-
-	var cosViewAngle = Math.cos(angle + playerDirection);
-	var sinViewAngle = Math.sin(angle + playerDirection);
-
-	var paralellDistanceToCeiling;
-	var distanceToCeiling;
-	var eyeHeight = (GRID_SIZE - playerHeight);
+	var paralellDistanceToFloor;
+	var distanceToFloor;
 	var pixelIndex;
 
 	var gx = 0;
@@ -707,30 +702,198 @@ function castCeiling(stopY, screenX, angle) {
 
 	var tileIndex;
 	var tile;
-	var color;
 	var sampleIndex = 0;
+
 	
-	for(var y = 0; y < stopY; y++) {
-		paralellDistanceToCeiling = (eyeHeight / (halfViewHeight - y)) * distanceToProjectionPlane;
+	for(var y = startY; y < stopY; y++) {
+																
+		paralellDistanceToCeiling = ((ceilingHeight - eyeHeight) / (halfViewHeight - y)) * distanceToProjectionPlane;
 		distanceToCeiling = (paralellDistanceToCeiling / cosAngle);
 
-		gx = ~~(distanceToCeiling * cosViewAngle + offsetPlayerX);
-		gy = ~~(distanceToCeiling * sinViewAngle + offsetPlayerY);
+		gx = (distanceToCeiling * cosViewAngle + viewX);
+		gy = (distanceToCeiling * sinViewAngle + viewY);
+		
+		var tileId = getWorld(gx, gy);
+		tile = world[tileId];
+		
+		if(tile) {
 
-		texX = ~~(gx % GRID_SIZE / 2); 
-		texY = ~~(gy % GRID_SIZE / 2);
+			texX = ~~(gx % GRID_SIZE / 2); 
+			texY = ~~(gy % GRID_SIZE / 2);
+			
+			pixelIndex = ((y) * BUFFER_WIDTH) + screenX;
 
-		tile = world[getWorld(gx, gy)];
-		if(tile){
-			sampleIndex = tile.ceilingTextureOffset + texX + (texY * TEXTURE_SIZE);
-
-			color = textureLookup32[sampleIndex];
-
-			pixelIndex = (y * BUFFER_WIDTH) + screenX;
-			buffer32[pixelIndex] = color;
-			depthBuffer[pixelIndex] = ~~distanceToCeiling;
+		if(depthBuffer[pixelIndex] > ~~distanceToCeiling) {
+				sampleIndex = tile.floorTextureOffset + texX + (texY * TEXTURE_SIZE);
+				buffer32[pixelIndex] = (texX * 8) + ((texY*8) << 8);// + getDebugFloorColor(tileId);//textureLookup32[sampleIndex];
+				//buffer32[pixelIndex] = getDebugFloorColor(tileId);//textureLookup32[sampleIndex];
+				buffer32[pixelIndex] = textureLookup32[sampleIndex];
+				//buffer32[pixelIndex] = getDebugFloorColor(tileId);
+				depthBuffer[pixelIndex] = ~~distanceToCeiling;
+			}
 		}
 	}
+}
+
+function drawFloor(viewX, viewY, eyeHeight, startY, stopY, screenX, angle, cosAngle, floorHeight) {
+	
+	var cosViewAngle = Math.cos(angle);// + playerDirection);
+	var sinViewAngle = Math.sin(angle);// + playerDirection);
+
+	var paralellDistanceToFloor;
+	var distanceToFloor;
+	var pixelIndex;
+
+	var gx = 0;
+	var gy = 0;
+
+	var texX = 0;
+	var texY = 0;
+
+	var tileIndex;
+	var tile;
+	var sampleIndex = 0;
+
+	
+	for(var y = startY; y < stopY; y++) {
+																
+		paralellDistanceToFloor = ((eyeHeight - floorHeight) / (halfViewHeight - y)) * distanceToProjectionPlane;
+		distanceToFloor = (paralellDistanceToFloor / cosAngle);
+
+		gx = (distanceToFloor * -cosViewAngle + viewX);
+		gy = (distanceToFloor * -sinViewAngle + viewY);
+		
+		var tileId = getWorld(gx, gy);
+		tile = world[tileId];
+		
+		if(tile) {
+
+			texX = ~~(gx % GRID_SIZE / 2); 
+			texY = ~~(gy % GRID_SIZE / 2);
+			
+			pixelIndex = ((y) * BUFFER_WIDTH) + screenX;
+
+		if(depthBuffer[pixelIndex] > ~~distanceToFloor) {
+				sampleIndex = tile.floorTextureOffset + texX + (texY * TEXTURE_SIZE);
+				buffer32[pixelIndex] = (texX * 8) + ((texY*8) << 8);// + getDebugFloorColor(tileId);//textureLookup32[sampleIndex];
+				//buffer32[pixelIndex] = getDebugFloorColor(tileId);//textureLookup32[sampleIndex];
+				buffer32[pixelIndex] = textureLookup32[sampleIndex];
+				//buffer32[pixelIndex] = getDebugFloorColor(tileId);
+				depthBuffer[pixelIndex] = ~~distanceToFloor;
+			}
+		}
+	}
+}
+
+
+
+function drawRayCast(viewX, viewY, eyeHeight, column, rayAngle, viewAngle, cosSliceAngle, rayResults) {
+
+	var pixelX = column;
+	var pixelY = 0;
+
+	var clipBottom = VIEWPORT_HEIGHT;
+
+	for(var i = 0; i < rayResults.length; i++) {
+		
+		// Upper wall, if the ceiling is transitioning down.
+		var correctedDistance = Math.sqrt(rayResults[i].distance) * cosSliceAngle;
+
+		if(pixelY < halfViewHeight) {
+			
+			var upperWallHeight = rayResults[i].backCeilingHeight - rayResults[i].ceilingHeight;
+			
+			if(upperWallHeight != 0) {
+				
+				var upperWallStart = halfViewHeight - (rayResults[i].backCeilingHeight - eyeHeight) / correctedDistance * distanceToProjectionPlane;
+				var upperWallStop = halfViewHeight - (rayResults[i].ceilingHeight - eyeHeight) / correctedDistance * distanceToProjectionPlane;
+				
+				if(pixelY < upperWallStart) {
+					drawCeiling(viewX, viewY, eyeHeight, pixelY, ~~upperWallStart, pixelX, rayAngle, cosSliceAngle, rayResults[i].backCeilingHeight);// {
+					pixelY = ~~(upperWallStart);
+				}
+
+				/*while(pixelY < upperWallStart){
+					pixelIndex = (pixelY * BUFFER_WIDTH) + pixelX;
+
+					buffer32[pixelIndex] = 0x0000ff;
+					depthBuffer[pixelIndex] = ~~correctedDistance;
+					pixelY++;
+				}*/
+
+				//pixelY = ~~Math.max(pixelY, upperWallStart);
+				
+				while(pixelY < upperWallStop){
+					pixelIndex = (pixelY * BUFFER_WIDTH) + pixelX;
+
+					buffer32[pixelIndex] = 0xff0000;
+					depthBuffer[pixelIndex] = ~~correctedDistance;
+					pixelY++;
+				}
+			}
+		}
+
+		var color = getDebugColor(rayResults[i].tileId);
+		
+		// Draw "middle" wall
+		if(rayResults[i].hasFace && !rayResults[i].transparent && !rayResults[i].isBackface) {
+			
+			var wallStart = halfViewHeight - ((rayResults[i].backCeilingHeight - eyeHeight) / correctedDistance * distanceToProjectionPlane);
+			var wallStop = halfViewHeight - ((rayResults[i].floorHeight - eyeHeight) / correctedDistance * distanceToProjectionPlane);
+			
+			if(pixelY < wallStart){
+				drawCeiling(viewX, viewY, eyeHeight, pixelY, ~~wallStart, pixelX, rayAngle, cosSliceAngle, rayResults[i].backCeilingHeight);// {
+				pixelY = ~~(wallStart);
+			}
+			wallStop = Math.min(wallStop, clipBottom);
+			while(pixelY < wallStop){
+				pixelIndex = (pixelY * BUFFER_WIDTH) + pixelX;
+
+				buffer32[pixelIndex] = color;//0x00ff00;
+				depthBuffer[pixelIndex] = ~~correctedDistance;
+				pixelY++;
+			}
+		}
+		
+
+		// Draw lower wall
+
+		//if(pixelY > halfViewHeight) {
+				
+			var lowerWallHeight = rayResults[i].backFloorHeight - rayResults[i].floorHeight;
+			
+			if(lowerWallHeight != 0) {
+				
+				var lowerWallStart = (halfViewHeight + (eyeHeight - rayResults[i].floorHeight) / correctedDistance * distanceToProjectionPlane);
+				var lowerWallStop =  (halfViewHeight + (eyeHeight - rayResults[i].backFloorHeight) / correctedDistance * distanceToProjectionPlane);
+				
+				//var pxY = ~~(lowerWallStart);	
+				var pxY = pixelY;
+				lowerWallStop = Math.min(lowerWallStop, clipBottom);
+				//if(pxY < lowerWallStart) {
+				//if(pixelY > halfViewHeight) {
+					drawFloor(viewX, viewY, eyeHeight, ~~lowerWallStop, clipBottom, pixelX, rayAngle, cosSliceAngle, rayResults[i].backFloorHeight);
+				//}
+				pxY = ~~(lowerWallStart);
+				
+				
+				
+				while(pxY < lowerWallStop) {
+					
+					pixelIndex = (pxY * BUFFER_WIDTH) + pixelX;
+					buffer32[pixelIndex] = 0xff00ff;
+					depthBuffer[pixelIndex] = ~~correctedDistance;
+					pxY++;
+				}
+				clipBottom = Math.min(lowerWallStart, clipBottom);
+			}
+		//}
+
+		
+	}
+		//if(pixelY < VIEWPORT_HEIGHT-1) {
+		//	drawFloor(viewX, viewY, eyeHeight, pixelY, VIEWPORT_HEIGHT-1, pixelX, rayAngle, cosSliceAngle, rayResults[i].floorHeight);
+		//}
 }
 
 // render the walls/floors
@@ -762,79 +925,30 @@ function renderWorld() {
 	var slice;
 	var r;
 
-	offsetPlayerX = playerX;
-	offsetPlayerY = playerY;
-
+	// the "view" sits 30 units behind the player position, otherwise the view gets jammed up into wals.
+	var offsetPlayerX = playerX;
+	var offsetPlayerY = playerY;
 	offsetPlayerX -= Math.cos(playerDirection) * 30;
 	offsetPlayerY -= Math.sin(playerDirection) * 30;
 
+	
 	// @ifdef STATS
 	//stats.playerInBlock = playerInBlock;
 	// @endif
 	
-	var cosSliceAngle;
+	var cosSliceAngle, rayAngle, viewAngle;
 	for(i = 0; i < VIEWPORT_WIDTH; i++) {
 		
 		result.length = 0;
 
-		var rayAngle = (start + (i * step));
+		rayAngle = (start + (i * step) + halfStep);
+		viewAngle = playerDirection + rayAngle;
 
 		cosSliceAngle = Math.cos(-halfFov + i * step + halfStep);
+
 		castRayRecursive(offsetPlayerX, offsetPlayerY, offsetPlayerX, offsetPlayerY, rayAngle, result, 32);
 	
-		var floorStop = VIEWPORT_HEIGHT;
-		var ceilingStart = VIEWPORT_HEIGHT;
-		var sliceBoundaries = {
-			floorStop : VIEWPORT_HEIGHT,
-			wallTop : VIEWPORT_HEIGHT
-		};
-		// draw non-transparent walls front to back
-		for(r = 0; r < result.length; r++) {
-			slice = result[r];
-			
-			if(!slice.isBackface){
-				correctedDistance = Math.sqrt(slice.distance) * cosSliceAngle;
-				
-				 sliceBoundaries = drawSlice(i, eyeHeight, slice, rayAngle - playerDirection, correctedDistance, floorStop, false);				 
-				 slice.yClip = floorStop;	
-				
-
-				if(sliceBoundaries.floorStart > halfViewHeight) {
-					castFloor(sliceBoundaries.floorStart, floorStop, i, rayAngle - playerDirection, slice.backFloorHeight, slice.tileId);
-				}
-				
-				
-			/*
-				var pixelIndex = ((sliceBoundaries.floorStart) * BUFFER_WIDTH) + i;
-				buffer32[pixelIndex] = 0x0000ff;
-				depthBuffer[pixelIndex] = 1;
-
-				var pixelIndex = ((sliceBoundaries.floorStop) * BUFFER_WIDTH) + i;
-				buffer32[pixelIndex] = 0x00ff00;
-				depthBuffer[pixelIndex] = 1;
-
-				var pixelIndex = ((sliceBoundaries.wallTop) * BUFFER_WIDTH) + i;
-				buffer32[pixelIndex] = 0xff0000;
-				depthBuffer[pixelIndex] = 1;
-			*/	
-			}
-		
-			ceilingStart = Math.min( sliceBoundaries.wallTop, ceilingStart);
-	
-			floorStop = Math.min( Math.min(VIEWPORT_HEIGHT, sliceBoundaries.floorStop), floorStop);
-			slice.yClip = floorStop;
-		}
-
-		castCeiling(ceilingStart, i, rayAngle-playerDirection); 
-
-		// draw transparent faces back-to-front
-		for(r = result.length-1; r >= 0; r--) {
-			slice = result[r];
-			if(slice.isBackface || slice.transparent) {
-				correctedDistance = Math.sqrt(slice.distance) * cosSliceAngle;
-				drawSlice(i, eyeHeight, slice, rayAngle - playerDirection, correctedDistance, slice.yClip, true);
-			}
-		}
+		drawRayCast(offsetPlayerX, offsetPlayerY, playerHeight, i, rayAngle, viewAngle, cosSliceAngle, result);
 	}
 
 // @ifdef DEBUG

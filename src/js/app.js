@@ -207,7 +207,7 @@ function update(now) {
 
 		debugAnimateBars(now);
 		renderWorld();
-		renderSprites();
+		//renderSprites();
 		loadColorTexture(buffer8);
 		loadDepthTexture(depthBuffer);
 		drawGL();

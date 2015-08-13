@@ -163,13 +163,16 @@ function generateMap() {
 		var isLava = ((tmpWorld[i] == 0) && (randomInt(3) == 0));
 		var floor =  isLava ? 64 : 39;
 		var floorHeight = 0;
-		if(isLava){
+		var ceilingHeight = 64;
+
+		if(isLava) {
 			floor = 40;
 			visibleface = 0;
 			flags = TILE_FLAGS_WALKABLE;
 			walkableface = TILE_FACE_ALL;
 			textureIndex = 40;
 			floorHeight = (randomInt(6) - 3) * 8;
+			ceilingHeight = (randomInt(12) - 6) + 64;
 			if(floorHeight < -8){
 				floor = 64;
 			}
@@ -189,6 +192,7 @@ function generateMap() {
 			textureIndex: textureIndex,
 			floorTexture: floor,
 			ceilingTexture: 41,
+			ceilingHeight: ceilingHeight,
 			tileTextureOffset: getPixelIndexForTexture(textureIndex),
 			ceilingTextureOffset: getPixelIndexForTexture(41),
 			floorHeight: floorHeight,
@@ -361,12 +365,14 @@ function use(tile, face) {
 
 
 function debugAnimateBars(now) {
-	var target = world[barsTile].isOpen ? 0.95 : 0.00;
+	var target = world[barsTile].isOpen ? 40 : 0.00;
 	
 	if(world[barsTile].isOpen) {
-		world[barsTile].texOffsetX = Math.min(target, world[barsTile].texOffsetX + 0.035);
+		world[barsTile].floorHeight = Math.min(target, world[barsTile].floorHeight + 1);
+		//world[barsTile].texOffsetX = Math.min(target, world[barsTile].texOffsetX + 0.035);
 	} else {
-		world[barsTile].texOffsetX = Math.max(target, world[barsTile].texOffsetX - 0.035);
+		world[barsTile].floorHeight = Math.max(target, world[barsTile].floorHeight - 1);
+		//world[barsTile].texOffsetX = Math.max(target, world[barsTile].texOffsetX - 0.035);
 	}
 	
 	if(world[barsTile].texOffsetX > 0.8){

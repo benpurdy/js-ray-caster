@@ -5,7 +5,7 @@ module.exports = function(grunt) {
     env : {
       dev : {
         CONFIG : 'DEV',
-        //DEBUG : true,
+       // DEBUG : true,
         STATS : true
       },
 

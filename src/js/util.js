@@ -1,13 +1,14 @@
-var debugColors = [0xa00000, 0x300000];//, 0x0000ff, 0xffff00, 0x00ffff, 0x0000ff, 0xffffff, 0xff8800, 0xffff88, 0x88ff00];
-var debugFloorColors = [0xc0c0c0, 0xa000a0];//, 0x0000ff, 0xffff00, 0x00ffff, 0x0000ff, 0xffffff, 0xff8800, 0xffff88, 0x88ff00];
-var debugLowerColors = [0x00a000, 0x005000];//, 0x0000ff, 0xffff00, 0x00ffff, 0x0000ff, 0xffffff, 0xff8800, 0xffff88, 0x88ff00];
-function getDebugColor(idx){
+var debugColors = [0xF00000, 0x800000];//, 0x0000ff, 0xffff00, 0x00ffff, 0x0000ff, 0xffffff, 0xff8800, 0xffff88, 0x88ff00];
+var debugFloorColors = [0xff0000, 0x000000];//, 0x0000ff, 0xffff00, 0x00ffff, 0x0000ff, 0xffffff, 0xff8800, 0xffff88, 0x88ff00];
+var debugLowerColors = [0x00f000, 0x00d000];//, 0x0000ff, 0xffff00, 0x00ffff, 0x0000ff, 0xffffff, 0xff8800, 0xffff88, 0x88ff00];
+
+function getDebugColor(idx) {
 	return debugColors[idx % debugColors.length];
 }
-function getDebugLowerColor(idx){
+function getDebugLowerColor(idx) {
 	return debugLowerColors[idx % debugLowerColors.length];
 }
-function getDebugFloorColor(idx){
+function getDebugFloorColor(idx) {
 	return debugFloorColors[idx % debugFloorColors.length];
 }
 
@@ -32,7 +33,7 @@ function constrain(val, min, max){
 }
 
 // Returns true if point(px, py) is to the left of line (x1, y1)-(x2, y2)
-function isLeft(x1,y1, x2,y2, px,py){
+function isLeft(x1, y1, x2, y2, px, py) {
 	return ((x2 - x1) * (py - y1) - (y2 - y1) * (px - x1)) > 0;
 }
 
@@ -64,9 +65,6 @@ Vec2.add = function(v1, v2){
 	return new Vec2(v1.x + v2.x, v1.y + v2.y);
 }
 
-Vec2.tmp1 = new Vec2(0,0);
-Vec2.tmp2 = new Vec2(0,0);
-
 Vec2.multiplyScalar = function(v1, scalar) {
 	var result = new Vec2();
 	result.copy(v1);
@@ -74,7 +72,7 @@ Vec2.multiplyScalar = function(v1, scalar) {
 	return result;
 }
 
-// isntance methods
+// instance methods
 
 Vec2.prototype.copy = function(other) {
 	this.x = other.x;
