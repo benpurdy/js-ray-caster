@@ -336,9 +336,10 @@ function getWorldUnchecked(x, y){
 	var tx = ~~(~~x / GRID_SIZE);
 	var ty = ~~(~~y / GRID_SIZE);
 
-	//if((tx >= WORLD_STRIDE) || (ty >= WORLD_STRIDE) || (tx < 0) || (ty < 0)) {
-	//	return -1;
-	//}
+	if((tx >= WORLD_STRIDE) || (ty >= WORLD_STRIDE) || (tx < 0) || (ty < 0)) {
+		//return -1;
+		debugger;
+	}
 
 	return  tx + ty * WORLD_STRIDE;
 }
@@ -436,7 +437,10 @@ function isWalkable(tileFlags) {
 }
 
 function isTransparent(tileFlags) {
+	// @ifdef STATS
 	stats.counters.isTransparent++;
+	// @endif
+
 	return (tileFlags & TILE_FLAGS_TRANSPARENT) == TILE_FLAGS_TRANSPARENT;
 }
 

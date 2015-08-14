@@ -248,7 +248,9 @@ function update(now) {
 		loadDepthTexture(depthBuffer);
 		drawGL();
 		var timeRenderStop = new Date().getTime();
+		// @ifdef STATS
 		stats.counters.renderTime = timeRenderStop - timeRenderStart;
+		// @endif
 	}	else {
 		//stats.skipFrame++;
 	}
