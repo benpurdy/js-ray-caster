@@ -1,13 +1,13 @@
 // @ifdef DEBUG
-// DEBUG BUILD
+// THIS IS A DEBUG BUILD
 // @endif
 
 var TEXTURE_SIZE = 512;
 var TILE_SIZE = 32;
 var GRID_SIZE = 64;
 
-var VIEWPORT_WIDTH = 160;
-var VIEWPORT_HEIGHT = 100;
+var VIEWPORT_WIDTH = 240;
+var VIEWPORT_HEIGHT = 160;
 
 // find the smallest power of two that can fit the viewport texture
 var bufferDimension = 1;
@@ -33,7 +33,6 @@ document.getElementById("resources").style.display = "block";
 
 // @ifdef STATS
 document.getElementById("status").style.display = "block";
-
 var stats = {
 	frames: 0,
 	playerInBlock: 0,
@@ -91,8 +90,8 @@ var distanceToProjectionPlane = halfViewWidth / Math.tan(halfFov);
 
 var bob = 0;
 
-var ceilingColor = 0xff704030;
-var floorColor = 0xff403040;
+//var ceilingColor = 0xff704030;
+//var floorColor = 0xff403040;
 
 
 // render loop stuff
@@ -159,11 +158,10 @@ function updatePlayer(delta) {
 	
 	playerHeight += ((32 + world[currentTile].floorHeight) - playerHeight) * 0.23;
 
-	// @ifdef STATS
+// @ifdef STATS
 	stats.playerTileId = currentTile;
 	stats.playerPosition = tx + ", " + ty;
-
-// @endif
+// @endif 
 
 	// player head-bob
 	/*	
@@ -182,13 +180,12 @@ function updatePlayer(delta) {
 	
 }
 
-
 function update(now) {
 
 	delta = (now - lastTime) / 1000;
 	lastTime = now;
 	frameAccum += delta;
-
+	var needsRender = false;
 	if(frameAccum > maxFrameTime){
 		frameAccum = 0;
 	}
@@ -201,20 +198,17 @@ function update(now) {
 		ctxd.fillRect(0, 0, WORLD_STRIDE*GRID_SIZE, WORLD_STRIDE*GRID_SIZE);
 		debugDrawWorld();
 // @endif
-		
+
 		var timeStamp1 = new Date().getTime();
 		updatePlayer(targetFrameTime);
 
 		debugAnimateBars(now);
-		renderWorld();
-		//renderSprites();
-		loadColorTexture(buffer8);
-		loadDepthTexture(depthBuffer);
-		drawGL();
+		
+
 
 		var timeStamp2 = new Date().getTime();
-	
-		// @ifdef STATS
+
+// @ifdef STATS
 		var statList = [];
 
 		for(itm in stats){
@@ -240,17 +234,32 @@ function update(now) {
 			stats.frames = 0;
 		}
 		resetStats();
-		// @endif
-	
+// @endif
+
 		frameAccum -= targetFrameTime;
+		needsRender = true;
 	}
+
+	if(needsRender) {
+		var timeRenderStart = new Date().getTime();
+		renderWorld();
+				//renderSprites();
+		loadColorTexture(buffer8);
+		loadDepthTexture(depthBuffer);
+		drawGL();
+		var timeRenderStop = new Date().getTime();
+		stats.counters.renderTime = timeRenderStop - timeRenderStart;
+	}	else {
+		//stats.skipFrame++;
+	}
+
 	window.requestAnimationFrame(update);
 }
 
 
 function resizeViewport() {
 	// @ifdef DEBUG
-		return;
+	return;
 	// @endif
 	
 	var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
@@ -263,19 +272,18 @@ function resizeViewport() {
 
 function initialize() {
 
-	imgTexture.src = "images/32tile.png";
+	imgTexture.src = "images/32tile-test.png";
 	generateMap();
 
 		resizeViewport();
-	// @ifdef DEBUG
-		var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
-		canvas.width = 800;
-		canvas.height = ~~(canvas.width / aspect);
-		canvas.style.float = "right";
-		initGL(canvas);
-	// @endif
-
+// @ifdef DEBUG
+	var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
+	canvas.width = 800;
+	canvas.height = ~~(canvas.width / aspect);
+	canvas.style.float = "right";
+	initGL(canvas);
 	//initGL(canvas);
+// @endif
 	initInputEvents();
 
 	window.addEventListener("resize", resizeViewport);

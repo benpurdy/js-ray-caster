@@ -12,6 +12,10 @@ var TILE_FACE_E = 1 << 1;
 var TILE_FACE_S = 1 << 2;
 var TILE_FACE_W = 1 << 3;
 
+var REPEAT = 1;
+var CLAMP = 2;
+var CUT = 3;
+
 var TILE_FACE_ALL = TILE_FACE_N + TILE_FACE_E + TILE_FACE_S + TILE_FACE_W;
 
 var barsTile;
@@ -23,12 +27,12 @@ function generateMap() {
 		40, 58,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0, 58,  0,  0,  0, 35,  0,  0,  0,  0,  0,  0,  0, 40,
 		40, 58, 33,  0, 33,  0, 32,  0,  0,  0,  0,  0,  0,  0, 40,
-		40,  0, 33,  0,  0,  0, 58,  0,  0,  0, 57,  0,  0,  0, 40,
+		40,  0, 33,  0,  0,  0, 58,  0,  0,  0,  0,  0,  0,  0, 40,
 		40, 58, 33, 59, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
-		40,  0,  0,  0,  0,  0,  0,  0,  0,  0, 57,  0,  0,  0, 40,
-		40,  0,  0,  0,  0,  0,  0, 58,  0, 57,  0, 34, 35,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0, 58,  0,  0,  0, 34, 35,  0, 40,
 		40,  0,  0,  0,  0,  0,  0, 33,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0, 32,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0, 34,  0,  0,  0,  0,  0,  0, 40,
@@ -171,32 +175,110 @@ function generateMap() {
 			flags = TILE_FLAGS_WALKABLE;
 			walkableface = TILE_FACE_ALL;
 			textureIndex = 40;
-			floorHeight = (randomInt(6) - 3) * 8;
-			ceilingHeight = (randomInt(12) - 6) + 64;
+			//floorHeight = (randomInt(6) - 6) * 8;
+			ceilingHeight = (randomInt(6) - 6) * 8 + 64;
 			if(floorHeight < -8){
 				floor = 64;
 			}
 		}
 
 		world.push({
-			floorcolor: floorcolor,
+			
 			gridx : x,
 			gridy : y,
+			
 			flags : flags,
+			
 			walkableface: walkableface,
 			visibleface: visibleface,
 			usableface: usableface,
 			faceVectors: faceVectors,
-			texOffsetX: 0,
-			texOffsetY: 0,
-			textureIndex: textureIndex,
 			floorTexture: floor,
+			floorTextureOffset: getPixelIndexForTexture(floor),
+
 			ceilingTexture: 41,
-			ceilingHeight: ceilingHeight,
-			tileTextureOffset: getPixelIndexForTexture(textureIndex),
 			ceilingTextureOffset: getPixelIndexForTexture(41),
+
+			faces: [
+				{ upper: {
+						textureIndex: 41,
+						textureSourceIndex: getPixelIndexForTexture(41),
+						textureScale: [1,1],
+						textureOffset: [0,0]
+					},
+					lower: {
+						textureIndex: 40,
+						textureSourceIndex: getPixelIndexForTexture(40),
+						textureScale: [1, Math.random()*0.5 + 0.5],
+						textureOffset: [0, 0]
+					},
+					middle: {
+						textureIndex: textureIndex,
+						textureSourceIndex: getPixelIndexForTexture(textureIndex),
+						textureScale: [1, 1],
+						textureOffset: [0,0]
+					}
+				},
+				{ upper: {
+						textureIndex: 41,
+						textureSourceIndex: getPixelIndexForTexture(41),
+						textureScale: [1, 1],
+						textureOffset: [0,0]
+					},
+					lower: {
+						textureIndex: 41,
+						textureSourceIndex: getPixelIndexForTexture(41),
+						textureScale: [1, 1],
+						textureOffset: [0,0]
+					},
+					middle: {
+						textureIndex: textureIndex,
+						textureSourceIndex: getPixelIndexForTexture(textureIndex),
+						textureScale: [1, 1],
+						textureOffset: [0,0]
+					}
+				},
+				{ upper: {
+						textureIndex: 41,
+						textureSourceIndex: getPixelIndexForTexture(41),
+						textureScale: [1, 1],
+						textureOffset: [0,0]
+					},
+					lower: {
+						textureIndex: 41,
+						textureSourceIndex: getPixelIndexForTexture(41),
+						textureScale: [1, 1],
+						textureOffset: [0,0]
+					},
+					middle: {
+						textureIndex: textureIndex,
+						textureSourceIndex: getPixelIndexForTexture(textureIndex),
+						textureScale: [1, 1],
+						textureOffset: [0,0]
+					}
+				},
+				{ upper: {
+						textureIndex: 41,
+						textureSourceIndex: getPixelIndexForTexture(41),
+						textureScale: [1, 1],
+						textureOffset: [0,0]
+					},
+					lower: {
+						textureIndex: 41,
+						textureSourceIndex: getPixelIndexForTexture(41),
+						textureScale: [1, 1],
+						textureOffset: [0,0]
+					},
+					middle: {
+						textureIndex: textureIndex,
+						textureSourceIndex: getPixelIndexForTexture(textureIndex),
+						textureScale: [1,1],
+						textureOffset: [0,0]
+					}
+				}
+			],
 			floorHeight: floorHeight,
-			floorTextureOffset: getPixelIndexForTexture(floor)
+			ceilingHeight: ceilingHeight,
 		});
 	}
 
@@ -232,12 +314,12 @@ function generateMap() {
 
 // Get the grid index/uid for a given world-space coordinate
 function getWorld(x, y){
-	// @ifdef STATS
+//@ifdef STATS
 	stats.counters.getWorld++;
-	// @endif
+//@endif	
+
 	var tx = ~~(~~x / GRID_SIZE);
 	var ty = ~~(~~y / GRID_SIZE);
-
 
 	if((tx >= WORLD_STRIDE) || (ty >= WORLD_STRIDE) || (tx < 0) || (ty < 0)) {
 		return -1;
@@ -246,6 +328,20 @@ function getWorld(x, y){
 	return  tx + ty * WORLD_STRIDE;
 }
 
+function getWorldUnchecked(x, y){
+//@ifdef STATS
+	stats.counters.getWorld++;
+//@endif	
+
+	var tx = ~~(~~x / GRID_SIZE);
+	var ty = ~~(~~y / GRID_SIZE);
+
+	//if((tx >= WORLD_STRIDE) || (ty >= WORLD_STRIDE) || (tx < 0) || (ty < 0)) {
+	//	return -1;
+	//}
+
+	return  tx + ty * WORLD_STRIDE;
+}
 
 function intersectSides(tile, x1,y1, x2,y2) {
 	var testVec1 = new Vec2(x1, y1);
@@ -264,8 +360,6 @@ function intersectSides(tile, x1,y1, x2,y2) {
 
 	return 0;
 }
-
-// @ifdef DEBUG
 
 function debugDrawWorldGrid(){
 	ctxd.fillStyle = "#d0d0d0";
@@ -337,16 +431,12 @@ function debugDrawWorld() {
 		}
 	}
 }
-// @endif
-
 function isWalkable(tileFlags) {
 	return (tileFlags & TILE_FLAGS_WALKABLE) == TILE_FLAGS_WALKABLE;
 }
 
 function isTransparent(tileFlags) {
-	// @ifdef STATS
 	stats.counters.isTransparent++;
-	// @endif
 	return (tileFlags & TILE_FLAGS_TRANSPARENT) == TILE_FLAGS_TRANSPARENT;
 }
 
