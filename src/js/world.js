@@ -175,8 +175,8 @@ function generateMap() {
 			flags = TILE_FLAGS_WALKABLE;
 			walkableface = TILE_FACE_ALL;
 			textureIndex = 40;
-			floorHeight = (randomInt(6) - 6) * 8;
-			ceilingHeight = (randomInt(6) - 6) * 8 + 64;
+			//floorHeight = (randomInt(6) - 6) * 8;
+			//ceilingHeight = (randomInt(6) - 6) * 8 + 64;
 			if(floorHeight < -8){
 				floor = 64;
 			}
@@ -195,6 +195,8 @@ function generateMap() {
 			faceVectors: faceVectors,
 			floorTexture: floor,
 			floorTextureOffset: getPixelIndexForTexture(floor),
+
+			brightness: 20,//randomInt(128) + 128,
 
 			ceilingTexture: 41,
 			ceilingTextureOffset: getPixelIndexForTexture(41),
@@ -282,6 +284,14 @@ function generateMap() {
 		});
 	}
 
+
+	// Add lighting
+
+	for(var x = 0; x < WORLD_STRIDE; x++){
+		for(var y = 0; y < WORLD_STRIDE; y++){
+			world[x+y*WORLD_STRIDE].brightness = ~~(Math.cos(x*0.6)*Math.sin(y*0.6) * 128 + 128);
+		}
+	}
 
 	// Add sprites
 
@@ -457,8 +467,19 @@ function use(tile, face) {
 	}
 }
 
+function setCeilingTexture(tile, newTexture){
+	tile.ceilingTexture = newTexture;
+	tile.ceilingTextureOffset = getPixelIndexForTexture(newTexture);
+}
 
 function debugAnimateBars(now) {
+
+for(var x = 0; x < WORLD_STRIDE; x++){
+		for(var y = 0; y < WORLD_STRIDE; y++){
+			world[x+y*WORLD_STRIDE].brightness = ~~(Math.cos(x*0.6+now*0.002)*Math.sin(y*0.6+now*0.001) * 128 + 128);
+		}
+	}
+
 	var target = world[barsTile].isOpen ? 40 : 0.00;
 	
 	if(world[barsTile].isOpen) {

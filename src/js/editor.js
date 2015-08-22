@@ -83,8 +83,8 @@ function renderEditor() {
   			tmpVec.copy(walls[i][0]);
   			tmpVec.lerp(walls[i][1], t/16);
 
-  			drawInWorld(tmpVec.x, tmpVec.y, tile.floorHeight, 0xffffff); 	
-  			drawInWorld(tmpVec.x, tmpVec.y, tile.ceilingHeight, 0xffffff); 	
+  			drawInWorld(tmpVec.x, tmpVec.y, tile.floorHeight, 0xffffffff); 	
+  			drawInWorld(tmpVec.x, tmpVec.y, tile.ceilingHeight, 0xffffffff); 	
   		}
 
 

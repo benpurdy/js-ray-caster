@@ -575,7 +575,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 	slice.hasLower = (backTile.floorHeight < tile.floorHeight);
 	slice.lower = floorOffset;
 
-
+	slice.backTileId = backTileId;
 	slice.floorHeight = tile.floorHeight;
 	slice.ceilingHeight = tile.ceilingHeight;
 	slice.backFloorHeight = backTile.floorHeight;
@@ -593,6 +593,7 @@ function castRayRecursive(originX, originY, startX, startY, angle, result, maxSt
 	if( backTile && ((backTile.visibleface & faceBitsBack) != 0)) {
 		
 			var backSlice = {
+				backTileId : slice.tileId,
 				isBackface : true,
 				//hasLower : false,
 				hasFace : ((backTile.visibleface & faceBitsBack) != 0),
@@ -680,7 +681,9 @@ function drawCeiling(viewX, viewY, eyeHeight, startY, stopY, screenX, angle, cos
 		texY = ~~(gy % GRID_SIZE / 2);
 		
 		sampleIndex = tile.ceilingTextureOffset + texX + (texY * TEXTURE_SIZE);
-		buffer32[pixelIndex] = textureLookup32[sampleIndex];
+		//buffer32[pixelIndex] = textureLookup32[sampleIndex];
+		var colorValue = textureLookup32[sampleIndex];
+		buffer32[pixelIndex] = (colorValue & 0x00ffffff) + (tile.brightness<<24);
 		depthBuffer[pixelIndex] = ~~distanceToCeiling;
 
   	pixelIndex += BUFFER_WIDTH;
@@ -722,9 +725,7 @@ function drawFloor(viewX, viewY, eyeHeight, startY, stopY, screenX, angle, cosAn
 	var offsetY = 0;
 	var tileId = 0;
   
-  // 
-	
-	for(y = startY; y < endY; y++, pixelHeight++) {
+  for(y = startY; y < endY; y++, pixelHeight++) {
 																
 		paralellDistanceToFloor = (viewHeight / pixelHeight) * distanceToProjectionPlane;
 		distanceToFloor = (paralellDistanceToFloor / cosAngle);
@@ -744,7 +745,8 @@ function drawFloor(viewX, viewY, eyeHeight, startY, stopY, screenX, angle, cosAn
 		sampleIndex = tile.floorTextureOffset + texX + (texY * TEXTURE_SIZE);
 		//buffer32[pixelIndex] = (texX * 8) + ((texY*8) << 8);// + getDebugFloorColor(tileId);//textureLookup32[sampleIndex];
 		
-		buffer32[pixelIndex] = textureLookup32[sampleIndex];
+		var colorValue = textureLookup32[sampleIndex];
+		buffer32[pixelIndex] = (colorValue & 0x00ffffff) + (tile.brightness<<24);
 		depthBuffer[pixelIndex] = ~~distanceToFloor;
 		pixelIndex += BUFFER_WIDTH;
 	}
@@ -766,6 +768,7 @@ function drawRayCast(viewX, viewY, eyeHeight, column, rayAngle, viewAngle, cosSl
 	for(var i = 0; i < end; i++) {
 		ray = rayResults[i];
 		tile = world[ray.tileId];
+		backTile = world[ray.backTileId];
 		
 		var correctedDistance = Math.sqrt(ray.distance) * cosSliceAngle;
 		
@@ -811,7 +814,11 @@ function drawRayCast(viewX, viewY, eyeHeight, column, rayAngle, viewAngle, cosSl
 				pixelIndex = (topY * BUFFER_WIDTH) + pixelX;
 				while(topY < upperWallStop){
 					sampleIndex = sampleOffset + (~~(texCoordY * TILE_SIZE) % TILE_SIZE) * TEXTURE_SIZE;
-					buffer32[pixelIndex] = textureLookup32[sampleIndex];;
+
+					var colorValue = textureLookup32[sampleIndex];
+					buffer32[pixelIndex] = (colorValue & 0x00ffffff) + (backTile.brightness<<24);
+
+					//buffer32[pixelIndex] = textureLookup32[sampleIndex];
 					depthBuffer[pixelIndex] = ~~correctedDistance;
 					
 					texCoordY += texCoordStepY;
@@ -861,7 +868,9 @@ function drawRayCast(viewX, viewY, eyeHeight, column, rayAngle, viewAngle, cosSl
 				
 				while(tmpY <= bottomY) {
 					sampleIndex = sampleOffset + (~~(texCoordY * TILE_SIZE) % TILE_SIZE) * TEXTURE_SIZE;
-					buffer32[pixelIndex] = textureLookup32[sampleIndex];
+					//buffer32[pixelIndex] = textureLookup32[sampleIndex];
+					var colorValue = textureLookup32[sampleIndex];
+					buffer32[pixelIndex] = (colorValue & 0x00ffffff) + (backTile.brightness<<24);
 					depthBuffer[pixelIndex] = ~~correctedDistance;
 					pixelIndex += BUFFER_WIDTH;
 					tmpY++;
@@ -873,7 +882,6 @@ function drawRayCast(viewX, viewY, eyeHeight, column, rayAngle, viewAngle, cosSl
 				}
 			}
 
-		
 		// Draw "middle" wall
 		if( ray.hasFace && !ray.transparent && !ray.isBackface) {
 
@@ -923,7 +931,10 @@ function drawRayCast(viewX, viewY, eyeHeight, column, rayAngle, viewAngle, cosSl
 				sampleIndex = sampleOffset + textureSampleY;
 
 				depthBuffer[pixelIndex] = ~~correctedDistance;
-				buffer32[pixelIndex] = textureLookup32[sampleIndex];
+				//buffer32[pixelIndex] = textureLookup32[sampleIndex];
+				var colorValue = textureLookup32[sampleIndex];
+				buffer32[pixelIndex] = (colorValue & 0x00ffffff) + (backTile.brightness<<24);
+
 				pixelIndex += BUFFER_WIDTH;
 				pxY++;
 				texCoordY += texCoordStepY;
@@ -951,6 +962,7 @@ var pixelX = column;
 	var end = rayResults.length;
 
 	var tile;
+	var backTile;
 	var textureStepY = 0;
 	var unitWallHeightPixels = 0;
 	var ray;
@@ -959,6 +971,7 @@ var pixelX = column;
 		
 		ray = rayResults[i];
 		tile = world[ray.tileId];
+		backTile = world[ray.backTileId];
 		
 		var correctedDistance = Math.sqrt(ray.distance) * cosSliceAngle;
 		
@@ -1005,7 +1018,7 @@ var pixelX = column;
 
 			wallStop = Math.min(VIEWPORT_HEIGHT, wallStop);
 
-
+			var brightness = (ray.isBackface) ? tile.brightness : backTile.brightness;
 
 			var textureWrap = REPEAT;
 			var discard = false;
@@ -1038,7 +1051,9 @@ var pixelX = column;
 
 					if(((textureSample & 0xff000000) != 0) && (depthBuffer[pixelIndex] >= ~~correctedDistance)) {
 						depthBuffer[pixelIndex] = ~~correctedDistance;
-						buffer32[pixelIndex] = textureSample;
+						//buffer32[pixelIndex] = textureSample;
+						var colorValue = textureLookup32[sampleIndex];
+						buffer32[pixelIndex] = (colorValue & 0x00ffffff) + (brightness << 24);
 					}
 				}
 				pixelIndex += BUFFER_WIDTH;
@@ -1095,10 +1110,10 @@ function renderWorld() {
 	
 	var halfViewPortWidth = VIEWPORT_WIDTH / 2;
 	var column = 0;
-
+	var castAngle = 0;
 	for(i = 0; i < VIEWPORT_WIDTH; i++) {
 		
-		var castAngle = Math.atan2(-distanceToProjectionPlane, -(i - halfViewPortWidth)) + Math.PI /2;
+		castAngle = Math.atan2(-distanceToProjectionPlane, -(i - halfViewPortWidth)) + Math.PI /2;
 
 		result.length = 0;
 
