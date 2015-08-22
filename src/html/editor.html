@@ -1,0 +1,77 @@
+<!-- @if CONFIG == "RELEASE" -->
+<!-- 
+	Hello person looking at source code.. 
+
+	This is a minified build.  If you want to see  
+	the non-minified source, take a look at the 
+	github repository:
+
+	https://github.com/benpurdy/js-ray-caster
+-->
+<!-- @endif -->
+<!-- @if CONFIG == "DEV" -->
+<!-- DEVELOPMENT BUILD -->
+<!-- @endif -->
+<html>
+
+<head>
+	<title></title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<link href="css/style.css" rel="stylesheet" type="text/css">
+</head>
+
+<body>
+
+	<div id="editor">
+
+		<svg width="100" height="100" version="1.1" id="selection-mask" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+			 viewBox="0 0 116.7 116.7" enable-background="new 0 0 116.7 116.7" xml:space="preserve">
+			<polygon id="wall-north" fill="#FFFFFF" stroke="#000000" stroke-miterlimit="10" points="84.6,32.3 84.6,84.4 116.7,116.7 116.7,0 "/>
+			<polygon id="wall-east" fill="#FFFFFF" stroke="#000000" stroke-miterlimit="10" points="32.3,32 84.4,32 116.7,0 0,0 "/>
+			<polygon id="wall-south" fill="#FFFFFF" stroke="#000000" stroke-miterlimit="10" points="84.4,84.6 32.3,84.6 0,116.7 116.7,116.7 "/>
+			<polygon id="wall-west" fill="#FFFFFF" stroke="#000000" stroke-miterlimit="10" points="32,84.4 32,32.3 0,0 0,116.7 "/>
+		</svg>
+
+
+	</div>
+
+	<canvas id="output"></canvas>
+
+	<!-- @if CONFIG == "DEV" -->
+	<canvas width="500" height="500" id="debug" style="display:none;"></canvas>
+	<!-- @endif -->
+	<!-- @ifdef STATS -->
+	<div id="status"></div>
+	<!-- @endif -->
+	<div id="resources" style="display:none;">
+		<img src="" id="texture">
+	</div>
+
+	<script id="vertex-shader" type="x-shader/x-vertex">
+	<!-- @include shaders/screen.vert -->
+	</script>
+	 
+	<script id="fragment-shader" type="x-shader/x-fragment">
+	<!-- @include shaders/screen.frag -->
+	</script>
+
+	<!-- @if CONFIG == "DEV" -->
+	<script src="js/util.js"></script>
+	<script src="js/world.js"></script>
+	<script src="js/renderer.js"></script>
+	<script src="js/input.js"></script>
+	<script src="js/gl.js"></script>
+	
+	<script src="js/app.js"></script>
+	<script src="js/editor.js"></script>
+	<!-- @endif-->
+
+	<!-- @if CONFIG == "RELEASE" -->
+	<script src="js/app.min.js"></script>
+	<script src="js/editor.js"></script>
+	<!-- @endif -->
+
+	<script> initialize(); </script>
+</body>
+
+</html>

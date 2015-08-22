@@ -98,6 +98,12 @@ Vec2.prototype.multiplyScalar = function(scalar) {
 	this.y *= scalar;
 }
 
+Vec2.prototype.lerp = function(other, amount){
+	this.x = this.x + (other.x - this.x) * amount;
+	this.y = this.y + (other.y - this.y) * amount;
+}
+
+
 function intersectVectors(p1, p2, s1, s2) {
 	
 	var s = Vec2.subtract(p2, p1);

@@ -1,0 +1,7 @@
+<svg version="1.1" id="selection-mask" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 116.7 116.7" enable-background="new 0 0 116.7 116.7" xml:space="preserve">
+	<polygon id="wall-north" fill="#FFFFFF" stroke="#000000" stroke-miterlimit="10" points="84.6,32.3 84.6,84.4 116.7,116.7 116.7,0 "/>
+	<polygon id="wall-east" fill="#FFFFFF" stroke="#000000" stroke-miterlimit="10" points="32.3,32 84.4,32 116.7,0 0,0 "/>
+	<polygon id="wall-south" fill="#FFFFFF" stroke="#000000" stroke-miterlimit="10" points="84.4,84.6 32.3,84.6 0,116.7 116.7,116.7 "/>
+	<polygon id="wall-west" fill="#FFFFFF" stroke="#000000" stroke-miterlimit="10" points="32,84.4 32,32.3 0,0 0,116.7 "/>
+</svg>

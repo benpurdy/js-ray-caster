@@ -175,7 +175,7 @@ function generateMap() {
 			flags = TILE_FLAGS_WALKABLE;
 			walkableface = TILE_FACE_ALL;
 			textureIndex = 40;
-			//floorHeight = (randomInt(6) - 6) * 8;
+			floorHeight = (randomInt(6) - 6) * 8;
 			ceilingHeight = (randomInt(6) - 6) * 8 + 64;
 			if(floorHeight < -8){
 				floor = 64;

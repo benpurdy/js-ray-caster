@@ -15,6 +15,8 @@ while(bufferDimension < VIEWPORT_WIDTH){
 	bufferDimension = bufferDimension << 1;
 }
 
+var renderCallback = function() {};
+
 var BUFFER_WIDTH = bufferDimension;
 var BUFFER_HEIGHT = bufferDimension;
 
@@ -79,6 +81,9 @@ var targetPlayerX = playerX;
 var targetPlayerY = playerY;
 
 var playerHeight = GRID_SIZE / 2;
+
+var cameraX = 0;
+var cameraY = 0;
 
 
 // view and rendering stuff
@@ -241,9 +246,13 @@ function update(now) {
 	}
 
 	if(needsRender) {
+
 		var timeRenderStart = new Date().getTime();
 		renderWorld();
-				//renderSprites();
+		//renderSprites();
+		
+		renderCallback();
+
 		loadColorTexture(buffer8);
 		loadDepthTexture(depthBuffer);
 		drawGL();

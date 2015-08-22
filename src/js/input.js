@@ -148,7 +148,7 @@ function tryMove(oldX, oldY, newX, newY) {
 		}
 
 		if( ((moveBitIncoming & newTile.walkableface) != 0) && 
-			( (moveBitOutgoing & currentTile.walkableface) != 0) ){
+			( (moveBitOutgoing & currentTile.walkableface) != 0) && (newTile.ceilingHeight - currentTile.floorHeight > GRID_SIZE/2) ) {
 			return true;
 		} else {
 			return false;

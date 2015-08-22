@@ -51,11 +51,11 @@ function renderSprites() {
 
 	// length of these points is arbitrary for drawing debug lines. They're just
 	// used to check if the sprites fall within the FOV.
-	var pvx = Math.cos(playerDirection - viewMargin) * 1000 + playerX;
-	var pvy = Math.sin(playerDirection - viewMargin) * 1000 + playerY;
+	var pvx = Math.cos(playerDirection - viewMargin) * 1000 + cameraX;
+	var pvy = Math.sin(playerDirection - viewMargin) * 1000 + cameraY;
 
-	var pvx2 = Math.cos(playerDirection + viewMargin) * 1000 + playerX;
-	var pvy2 = Math.sin(playerDirection + viewMargin) * 1000 + playerY;
+	var pvx2 = Math.cos(playerDirection + viewMargin) * 1000 + cameraX;
+	var pvy2 = Math.sin(playerDirection + viewMargin) * 1000 + cameraY;
 
 	var eyeHeight = (GRID_SIZE / 2) - playerHeight;
 
@@ -63,24 +63,24 @@ function renderSprites() {
 	var sina = Math.sin(-playerDirection);
 
 	for(var i = 0; i < sprites.length; i++) {
-		var angleToSprite = angleBetween(playerX, playerY, sprites[i].x, sprites[i].y);
+		var angleToSprite = angleBetween(cameraX, cameraY, sprites[i].x, sprites[i].y);
 
 		var dx = Math.cos(angleToSprite) * 24 + sprites[i].x;
 		var dy = Math.sin(angleToSprite) * 24 + sprites[i].y;
 		
-		var sx = sprites[i].x - playerX;
-		var sy = sprites[i].y - playerY;
+		var sx = sprites[i].x - cameraX;
+		var sy = sprites[i].y - cameraY;
 
-		var sx1 = (cosa * sx) - (sina * sy) + playerX;
-		var sy1 = (sina * sx) + (cosa * sy) + playerY;
+		var sx1 = (cosa * sx) - (sina * sy) + cameraX;
+		var sy1 = (sina * sx) + (cosa * sy) + cameraY;
 
 		// filter out sprites outside the view region.
-		if(isLeft(playerX, playerY, pvx, pvy, sprites[i].x, sprites[i].y) && 
-			!isLeft(playerX, playerY, pvx2, pvy2, sprites[i].x, sprites[i].y)) {
+		if(isLeft(cameraX, cameraY, pvx, pvy, sprites[i].x, sprites[i].y) && 
+			!isLeft(cameraX, cameraY, pvx2, pvy2, sprites[i].x, sprites[i].y)) {
 			
-			angleToSprite = angleBetween(playerX, playerY, sx1, sy1);
+			angleToSprite = angleBetween(cameraX, cameraY, sx1, sy1);
 
-			var distanceToPlayer = Math.sqrt(distance(playerX, playerY, sprites[i].x, sprites[i].y));
+			var distanceToPlayer = Math.sqrt(distance(cameraX, cameraY, sprites[i].x, sprites[i].y));
 			
 			var correctedDist = distanceToPlayer * Math.cos(angleToSprite);
 			var viewOffsetY = ~~(eyeHeight / correctedDist * distanceToProjectionPlane);
@@ -138,10 +138,10 @@ function renderSprites() {
 	ctxd.strokeStyle = "#d0d0d0";
 	ctxd.beginPath();
 	ctxd.moveTo(pvx, pvy);
-	ctxd.lineTo(playerX, playerY);
+	ctxd.lineTo(cameraX, cameraY);
 	ctxd.lineTo(pvx2, pvy2);
 	ctxd.stroke();
-	ctxd.fillRect(playerX-1,playerY-1,3,3);
+	ctxd.fillRect(cameraX-1, cameraY-1,3,3);
 // @endif
 }
 
@@ -157,8 +157,6 @@ function drawSlice(viewX, eyeHeight, slice, angle, correctedDistance, yClip, bac
 
 	var texCoordX = slice.sampleX + slice.texOffsetX;
 	
-	
-
 	var ceiling = GRID_SIZE;
 	var floor = slice.floorHeight;
 	var backFloor = slice.backFloorHeight;
@@ -719,6 +717,13 @@ function drawFloor(viewX, viewY, eyeHeight, startY, stopY, screenX, angle, cosAn
 		return;
 	}
 
+	//var now = new Date().getMilliseconds() / 1000;
+	var offsetX = 0;
+	var offsetY = 0;
+	var tileId = 0;
+  
+  // 
+	
 	for(y = startY; y < endY; y++, pixelHeight++) {
 																
 		paralellDistanceToFloor = (viewHeight / pixelHeight) * distanceToProjectionPlane;
@@ -727,22 +732,25 @@ function drawFloor(viewX, viewY, eyeHeight, startY, stopY, screenX, angle, cosAn
 		gx = (distanceToFloor * cosViewAngle + viewX);
 		gy = (distanceToFloor * sinViewAngle + viewY);
 		
-		tile = world[getWorldUnchecked(gx, gy)];
+		tileId = getWorldUnchecked(gx, gy);
+		
+		tile = world[tileId];
 
-		texX = ~~(gx % GRID_SIZE / 2); 
-		texY = ~~(gy % GRID_SIZE / 2);
+		texX = ~~(gx % GRID_SIZE / 2) + offsetX; 
+		texY = ~~(gy % GRID_SIZE / 2) + offsetY;
+		texX = texX % TILE_SIZE;
+		texY = texY % TILE_SIZE;
+		//var offset = ~~(now * TILE_SIZE)
 		sampleIndex = tile.floorTextureOffset + texX + (texY * TEXTURE_SIZE);
 		//buffer32[pixelIndex] = (texX * 8) + ((texY*8) << 8);// + getDebugFloorColor(tileId);//textureLookup32[sampleIndex];
+		
 		buffer32[pixelIndex] = textureLookup32[sampleIndex];
 		depthBuffer[pixelIndex] = ~~distanceToFloor;
 		pixelIndex += BUFFER_WIDTH;
 	}
 }
 
-
-
 function drawRayCast(viewX, viewY, eyeHeight, column, rayAngle, viewAngle, cosSliceAngle, rayResults) {
-	//var now = new Date().getMilliseconds() * 0.001;
 	var pixelX = column;
 	
 	var topY = 0;
@@ -760,8 +768,7 @@ function drawRayCast(viewX, viewY, eyeHeight, column, rayAngle, viewAngle, cosSl
 		tile = world[ray.tileId];
 		
 		var correctedDistance = Math.sqrt(ray.distance) * cosSliceAngle;
-		var projectHeight = correctedDistance * distanceToProjectionPlane;
-
+		
 		unitWallHeightPixels = ~~(GRID_SIZE / correctedDistance * distanceToProjectionPlane) + 1.1;
 		textureStepY = ((TILE_SIZE / unitWallHeightPixels) / TILE_SIZE);
 		
@@ -781,7 +788,7 @@ function drawRayCast(viewX, viewY, eyeHeight, column, rayAngle, viewAngle, cosSl
 				// Draw ceiling above upper wall.
 				if(topY < upperWallStart) {
 				  drawCeiling(viewX, viewY, eyeHeight, topY, ~~(upperWallStart), pixelX, rayAngle, cosSliceAngle, ray.backCeilingHeight);// {
-					topY = ~~(upperWallStart)-1;
+					topY = ~~(upperWallStart);
 				}
 
 				var faceDef = tile.faces[ray.faceIndex].upper;
@@ -804,10 +811,11 @@ function drawRayCast(viewX, viewY, eyeHeight, column, rayAngle, viewAngle, cosSl
 				pixelIndex = (topY * BUFFER_WIDTH) + pixelX;
 				while(topY < upperWallStop){
 					sampleIndex = sampleOffset + (~~(texCoordY * TILE_SIZE) % TILE_SIZE) * TEXTURE_SIZE;
-					texCoordY += texCoordStepY;
-					pixelIndex += BUFFER_WIDTH;
 					buffer32[pixelIndex] = textureLookup32[sampleIndex];;
 					depthBuffer[pixelIndex] = ~~correctedDistance;
+					
+					texCoordY += texCoordStepY;
+					pixelIndex += BUFFER_WIDTH;
 					topY++;
 				}
 			}
@@ -953,8 +961,7 @@ var pixelX = column;
 		tile = world[ray.tileId];
 		
 		var correctedDistance = Math.sqrt(ray.distance) * cosSliceAngle;
-		var projectHeight = correctedDistance * distanceToProjectionPlane;
-
+		
 		unitWallHeightPixels = ~~(GRID_SIZE / correctedDistance * distanceToProjectionPlane) + 1.1;
 		textureStepY = ((TILE_SIZE / unitWallHeightPixels) / TILE_SIZE);
 
@@ -1048,6 +1055,8 @@ var pixelX = column;
 	}
 }
 
+var rayAngles = [];
+
 // render the walls/floors
 function renderWorld() {
 
@@ -1063,7 +1072,7 @@ function renderWorld() {
 	var step = fov / VIEWPORT_WIDTH;
 	var halfStep = step / 2;
 
-	var start = playerDirection - (fov / 2) + halfStep;
+	var start = playerDirection - (fov / 2);// + halfStep;
 	//var stop = playerDirection + (fov / 2) + halfStep;
 
 	var slice = {};
@@ -1078,27 +1087,32 @@ function renderWorld() {
 	var r;
 
 	// the "view" sits 30 units behind the player position, otherwise the view gets jammed up into wals.
-	var offsetPlayerX = playerX;
-	var offsetPlayerY = playerY;
-	offsetPlayerX -= Math.cos(playerDirection) * 30;
-	offsetPlayerY -= Math.sin(playerDirection) * 30;
+	cameraX = playerX - Math.cos(playerDirection) * 30;
+	cameraY = playerY - Math.sin(playerDirection) * 30;
 
-	halfStep = step / 2;
+	halfStep = 0;
 	var cosSliceAngle, rayAngle, viewAngle;
 	
+	var halfViewPortWidth = VIEWPORT_WIDTH / 2;
+	var column = 0;
+
 	for(i = 0; i < VIEWPORT_WIDTH; i++) {
 		
+		var castAngle = Math.atan2(-distanceToProjectionPlane, -(i - halfViewPortWidth)) + Math.PI /2;
+
 		result.length = 0;
 
-		rayAngle = (start + (i * step) + halfStep);
-		viewAngle = playerDirection + rayAngle;
+		rayAngle = playerDirection + castAngle;
+		viewAngle = (fov / 2) + (i * step);
 
-		cosSliceAngle = Math.cos(-halfFov + i * step + halfStep);
+		cosSliceAngle = Math.cos(castAngle);
 
-		castRayRecursive(offsetPlayerX, offsetPlayerY, offsetPlayerX, offsetPlayerY, rayAngle, result, 32);
-		drawRayCast(offsetPlayerX, offsetPlayerY, playerHeight, i, rayAngle, viewAngle, cosSliceAngle, result);
-		drawTransparent(offsetPlayerX, offsetPlayerY, playerHeight, i, rayAngle, viewAngle, cosSliceAngle, result);
+		castRayRecursive(cameraX, cameraY, cameraX, cameraY, rayAngle, result, 32);
+	
+		drawRayCast(cameraX, cameraY, playerHeight, VIEWPORT_WIDTH-column-1, rayAngle, viewAngle, cosSliceAngle, result);
+	
+		drawTransparent(cameraX, cameraY, playerHeight, VIEWPORT_WIDTH-column-1, rayAngle, viewAngle, cosSliceAngle, result);
+
+		column++;
 	}
-
-//	debugDrawDividers();
 }
