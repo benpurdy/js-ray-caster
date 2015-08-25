@@ -8,7 +8,7 @@ uniform sampler2D u_depth;
 const float falloffStart = 128.0;
 const float falloffEnd = 1268.0;
 const float falloffPower = 0.8;
-const float colorSteps = 16.0;
+const float colorSteps = 8.0;
 const float fogMax = 1.0;
 const vec3 fogColor = vec3(0.0, 0.0, 0.0);
 
@@ -17,7 +17,7 @@ void main() {
 	float depthSample = texture2D(u_depth, UV).r;
 	vec4 textureSample = texture2D(u_image, UV);
 
-	float brightness = ceil(textureSample.a * colorSteps) / colorSteps;
+	float brightness = textureSample.a;//ceil(textureSample.a * colorSteps) / colorSteps;
 
 	vec3 color = textureSample.rgb * brightness;
 
@@ -31,6 +31,6 @@ void main() {
 	depthSample = mix(0.0, fogMax, depthSample);
 
 	color = mix(color, fogColor, depthSample);
-	//color = vec3(textureSample.a, textureSample.g, textureSample.b);
+	// color = vec3(textureSample.a, textureSample.g, textureSample.b);
 	gl_FragColor = vec4(color, 1.0);
 }

@@ -1,5 +1,8 @@
 var WORLD_STRIDE = 15;
 
+var WORLD_WIDTH = 15;
+var WORLD_HEIGHT = 15;
+
 var world = [];
 var sprites = [];
 
@@ -7,18 +10,45 @@ var TILE_FLAGS_TRANSPARENT 	= 1 << 0;
 var TILE_FLAGS_WALKABLE 		= 1 << 1;
 var TILE_FLAGS_VISIBLE      = 1 << 2;
 
-var TILE_FACE_N = 1 << 0;
-var TILE_FACE_E = 1 << 1;
-var TILE_FACE_S = 1 << 2;
-var TILE_FACE_W = 1 << 3;
+var TILE_FACE_N = 1 << 1;
+var TILE_FACE_E = 1 << 0;
+var TILE_FACE_S = 1 << 3;
+var TILE_FACE_W = 1 << 2;
+
+var FACE_INDEX_N = 0;
+var FACE_INDEX_E = 1;
+var FACE_INDEX_S = 2;
+var FACE_INDEX_W = 3;
 
 var REPEAT = 1;
 var CLAMP = 2;
 var CUT = 3;
 
+var NULL_TILE_ID = 0;
+
 var TILE_FACE_ALL = TILE_FACE_N + TILE_FACE_E + TILE_FACE_S + TILE_FACE_W;
 
 var barsTile;
+
+var textures = [];
+
+function initTextures() {
+	var textureSteps = TEXTURE_SIZE / TILE_SIZE;
+	var idx = 0;
+	
+	for(var y = 0; y < textureSteps; y++){
+		for(var x = 0; x < textureSteps; x++){
+			
+			textures.push( {
+				pixelOffset: getPixelIndexForTexture(idx),
+				sourceX: x*TILE_SIZE,
+				sourceY: y*TILE_SIZE
+			} );	
+			
+			idx++;
+		}
+	}
+}
 
 function generateMap() {
 
@@ -29,11 +59,11 @@ function generateMap() {
 		40, 58, 33,  0, 33,  0, 32,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0, 33,  0,  0,  0, 58,  0,  0,  0,  0,  0,  0,  0, 40,
 		40, 58, 33, 59, 33,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0, 0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
-		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
-		40,  0,  0,  0,  0,  0,  0, 58,  0,  0,  0, 34, 35,  0, 40,
-		40,  0,  0,  0,  0,  0,  0, 33,  0,  0,  0,  0,  0,  0, 40,
+		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 34, 35,  0, 40,
+		40,  0,  0,  0, 32,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0, 32,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0, 34,  0,  0,  0,  0,  0,  0, 40,
 		40,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0, 40,
@@ -63,8 +93,8 @@ function generateMap() {
 
 	// randomize edge walls for more interestingness.
 	for(var i = 0; i < WORLD_STRIDE; i++) {
-		tmpWorld[i] = 32;//randomInt(6) + 40;
-		tmpWorld[i*WORLD_STRIDE] = 32;//randomInt(6) + 40;
+		tmpWorld[i] = randomInt(6) + 40;
+		tmpWorld[i*WORLD_STRIDE] = randomInt(6) + 40;
 		tmpWorld[i*WORLD_STRIDE+(WORLD_STRIDE-1)] = randomInt(6) + 40;
 		tmpWorld[WORLD_STRIDE*(WORLD_STRIDE-1)+i] = randomInt(6) + 40;
 	}
@@ -75,64 +105,53 @@ function generateMap() {
 	for(var i = 0; i < tmpWorld.length; i++) {
 		var flags = 0;
 		
-		var visibleface = 0;
-		var walkableface = 0;
-		var usableface = 0;
+		var faceflags = [0, 0, 0, 0];
+
 		var textureIndex = tmpWorld[i];
 
 		var floorcolor = randomInt(80)+60 + ((randomInt(80)+60) << 8) + ((randomInt(80)+60) << 16);
 
 		if(tmpWorld[i] == 58) { // Vines
 
-			flags = TILE_FLAGS_TRANSPARENT | TILE_FLAGS_WALKABLE | TILE_FLAGS_VISIBLE;
+			var face = randomInt(4);
+			
+			faceflags[face] |= TILE_FLAGS_VISIBLE;
+			faceflags[face] |= TILE_FLAGS_TRANSPARENT;
 
-			// assign a random face to be visible.
-			var f1, f1;
-			switch(randomInt(4)){
-				case 0:
-					visibleface = TILE_FACE_S;
-				break;
-					case 1:
-					visibleface = TILE_FACE_N;
-				break;
-				case 2:
-					visibleface = TILE_FACE_E;
-				break;
-				case 3:
-					visibleface = TILE_FACE_W;
-				break;
-			}
-			walkableface = TILE_FACE_ALL;
+			faceflags[0] |= TILE_FLAGS_WALKABLE;
+			faceflags[1] |= TILE_FLAGS_WALKABLE;
+			faceflags[2] |= TILE_FLAGS_WALKABLE;
+			faceflags[3] |= TILE_FLAGS_WALKABLE;
+			
 			floorcolor = 0x003000;
-
 		} else if(tmpWorld[i] == 57) { // Fence
 			
-			flags = TILE_FLAGS_TRANSPARENT | TILE_FLAGS_VISIBLE | TILE_FLAGS_WALKABLE;
-			visibleface = TILE_FACE_N | TILE_FACE_S;
-			walkableface = TILE_FACE_E | TILE_FACE_W;
+			faceflags[0] |= (TILE_FLAGS_VISIBLE | TILE_FLAGS_TRANSPARENT);
+			
+			faceflags[1] |= TILE_FLAGS_WALKABLE;
+			faceflags[3] |= TILE_FLAGS_WALKABLE;
 
 		} else if(tmpWorld[i] == 59) { // Bars
-			barsTile = i;
-			flags = TILE_FLAGS_TRANSPARENT | TILE_FLAGS_VISIBLE | TILE_FLAGS_WALKABLE;
 			
-			visibleface = TILE_FACE_S;
-
-			walkableface = ~visibleface;
-			usableface = visibleface;
-		
+			barsTile = i;
+			
+			faceflags[0] |= (TILE_FLAGS_VISIBLE | TILE_FLAGS_TRANSPARENT);
+			
+			faceflags[1] |= TILE_FLAGS_WALKABLE;
+			faceflags[2] |= TILE_FLAGS_WALKABLE;
+			faceflags[3] |= TILE_FLAGS_WALKABLE;
 		} else if(tmpWorld[i] != 0) { // Flag all other non-empty tiles as visible.
-		
-			flags = TILE_FLAGS_VISIBLE;
-
-			visibleface = TILE_FACE_ALL;
-			walkableface = 0;
-			//tmpWorld[i] = 57;
+			faceflags[0] |= TILE_FLAGS_VISIBLE;
+			faceflags[1] |= TILE_FLAGS_VISIBLE;
+			faceflags[2] |= TILE_FLAGS_VISIBLE;
+			faceflags[3] |= TILE_FLAGS_VISIBLE;
 		}
 
 		if(tmpWorld[i] == 0) { // make empty spaces walkable.
-			flags = TILE_FLAGS_WALKABLE;
-			walkableface = TILE_FACE_ALL;
-			textureIndex = 40;
+			faceflags[0] |= TILE_FLAGS_WALKABLE;
+			faceflags[1] |= TILE_FLAGS_WALKABLE;
+			faceflags[2] |= TILE_FLAGS_WALKABLE;
+			faceflags[3] |= TILE_FLAGS_WALKABLE;
 		}
 
 		// Set up pairs of vectors for each wall segment to use for 
@@ -142,9 +161,9 @@ function generateMap() {
 		var y = ~~(i / WORLD_STRIDE);
 		var faceVectors = [];
 		var offsets = [
-			[0,0, 1,0],
-			[1,0, 1,1],
 			[1,1, 0,1],
+			[1,0, 1,1],
+			[0,0, 1,0],
 			[0,1, 0,0]
 		];
 		
@@ -157,13 +176,6 @@ function generateMap() {
 			faceVectors.push( [new Vec2(fx, fy), new Vec2(fx2,fy2)] );
 		}
 
-		/*
-		var textureIndex = tmpWorld[i];
-		var tileX = textureIndex % 8;
-		var tileY = ~~(textureIndex / 8);
-		var textureOffset = (tileX * TILE_SIZE) + ((tileY * TILE_SIZE) * TEXTURE_SIZE);
-		*/
-
 		var isLava = ((tmpWorld[i] == 0) && (randomInt(3) == 0));
 		var floor =  isLava ? 64 : 39;
 		var floorHeight = 0;
@@ -172,8 +184,6 @@ function generateMap() {
 		if(isLava) {
 			floor = 40;
 			visibleface = 0;
-			flags = TILE_FLAGS_WALKABLE;
-			walkableface = TILE_FACE_ALL;
 			textureIndex = 40;
 			//floorHeight = (randomInt(6) - 6) * 8;
 			//ceilingHeight = (randomInt(6) - 6) * 8 + 64;
@@ -187,31 +197,31 @@ function generateMap() {
 			gridx : x,
 			gridy : y,
 			
-			flags : flags,
-			
-			walkableface: walkableface,
-			visibleface: visibleface,
-			usableface: usableface,
 			faceVectors: faceVectors,
+		
+			brightness: 255,
+
+			ceilingHeight: ceilingHeight,
+			ceilingTexture: 41,
+			ceilingTextureOffset: getPixelIndexForTexture(41),
+			
+			floorHeight: floorHeight,
 			floorTexture: floor,
 			floorTextureOffset: getPixelIndexForTexture(floor),
 
-			brightness: 20,//randomInt(128) + 128,
-
-			ceilingTexture: 41,
-			ceilingTextureOffset: getPixelIndexForTexture(41),
-
 			faces: [
-				{ upper: {
+				{ 
+					flags: faceflags[0],
+					upper: {
 						textureIndex: 41,
 						textureSourceIndex: getPixelIndexForTexture(41),
 						textureScale: [1,1],
 						textureOffset: [0,0]
 					},
 					lower: {
-						textureIndex: 40,
-						textureSourceIndex: getPixelIndexForTexture(40),
-						textureScale: [1, Math.random()*0.5 + 0.5],
+						textureIndex: 41,
+						textureSourceIndex: getPixelIndexForTexture(41),
+						textureScale: [1, 1],
 						textureOffset: [0, 0]
 					},
 					middle: {
@@ -221,7 +231,9 @@ function generateMap() {
 						textureOffset: [0,0]
 					}
 				},
-				{ upper: {
+				{
+					flags: faceflags[1],
+				  upper: {
 						textureIndex: 41,
 						textureSourceIndex: getPixelIndexForTexture(41),
 						textureScale: [1, 1],
@@ -240,7 +252,9 @@ function generateMap() {
 						textureOffset: [0,0]
 					}
 				},
-				{ upper: {
+				{ 
+					flags: faceflags[2],
+					upper: {
 						textureIndex: 41,
 						textureSourceIndex: getPixelIndexForTexture(41),
 						textureScale: [1, 1],
@@ -259,7 +273,9 @@ function generateMap() {
 						textureOffset: [0,0]
 					}
 				},
-				{ upper: {
+				{ 
+					flags: faceflags[3],
+					upper: {
 						textureIndex: 41,
 						textureSourceIndex: getPixelIndexForTexture(41),
 						textureScale: [1, 1],
@@ -278,18 +294,16 @@ function generateMap() {
 						textureOffset: [0,0]
 					}
 				}
-			],
-			floorHeight: floorHeight,
-			ceilingHeight: ceilingHeight,
+			]
 		});
 	}
-
-
+	console.log("world loaded.");
+	return;
 	// Add lighting
 
 	for(var x = 0; x < WORLD_STRIDE; x++){
 		for(var y = 0; y < WORLD_STRIDE; y++){
-			world[x+y*WORLD_STRIDE].brightness = ~~(Math.cos(x*0.6)*Math.sin(y*0.6) * 128 + 128);
+		//	world[x+y*WORLD_STRIDE].brightness = ~~(Math.cos(x*0.6)*Math.sin(y*0.6) * 128 + 128);
 		}
 	}
 
@@ -320,6 +334,8 @@ function generateMap() {
 				"tileY" : ty
 			});
 	}
+
+	console.log("DONE WITH WORLD.");
 }
 
 // Get the grid index/uid for a given world-space coordinate
@@ -332,7 +348,7 @@ function getWorld(x, y){
 	var ty = ~~(~~y / GRID_SIZE);
 
 	if((tx >= WORLD_STRIDE) || (ty >= WORLD_STRIDE) || (tx < 0) || (ty < 0)) {
-		return -1;
+		return NULL_TILE_ID;
 	}
 
 	return  tx + ty * WORLD_STRIDE;
@@ -347,8 +363,8 @@ function getWorldUnchecked(x, y){
 	var ty = ~~(~~y / GRID_SIZE);
 
 	if((tx >= WORLD_STRIDE) || (ty >= WORLD_STRIDE) || (tx < 0) || (ty < 0)) {
-		//return -1;
-		debugger;
+		return NULL_TILE_ID;
+	//	debugger;
 	}
 
 	return  tx + ty * WORLD_STRIDE;
@@ -395,17 +411,22 @@ function debugDrawWorld() {
 		[0,0, 0,1]  // W
 	];
 
-
+	var tile;
+	ctxd.lineWidth = 2;
 	for(var y = 0; y < WORLD_STRIDE; y++) {
 		for(var x = 0; x < WORLD_STRIDE; x++) {
-			
+			ctxd.lineWidth = 2;
+
 			var tileId = x + y * WORLD_STRIDE;
 			var px = x * GRID_SIZE;
 			var py = y * GRID_SIZE;
+			tile = world[tileId];
 			
-			if(isVisible(world[tileId].flags)){
-				var transparent = isTransparent(world[tileId].flags);
+			var compositFlags = (tile.faces[0].flags | tile.faces[1].flags | tile.faces[2].flags | tile.faces[3].flags);
+
+			if(isVisible(compositFlags)) {
 				
+				var transparent = isTransparent(compositFlags);
 				
 				ctxd.fillStyle = transparent ? "#d0d0d0" : "#695628";
 				ctxd.fillRect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE, GRID_SIZE);
@@ -418,7 +439,7 @@ function debugDrawWorld() {
 					ctxd.save();
 					ctxd.translate(px + GRID_SIZE / 2, py + GRID_SIZE / 2);
 							
-					for(var i = 0; i < walls.length; i++){
+					/*for(var i = 0; i < walls.length; i++){
 						
 						if( (world[tileId].visibleface & (1<<i)) != 0 ) {
 							ctxd.save();
@@ -427,20 +448,27 @@ function debugDrawWorld() {
 							ctxd.lineTo( GRID_SIZE / 2 - 2, GRID_SIZE / 2);
 							ctxd.restore();
 						}
-					}
+					}*/
 
 					ctxd.restore();
 					ctxd.stroke();
 					ctxd.lineWidth = 1;
 				}
 
-				if(!isWalkable(world[tileId].flags)) {
-					ctxd.strokeStyle = "#202020";
-					ctxd.strokeRect(px + 1, py + 1, GRID_SIZE-2, GRID_SIZE-2);
+				for(var f = 0; f < 4; f++) {
+					if((tile.faces[f].flags & TILE_FLAGS_WALKABLE) == 0) {
+						ctxd.strokeStyle = "#000000";
+						ctxd.lineWidth = 4;
+						ctxd.beginPath();
+						ctxd.moveTo(tile.faceVectors[f][0].x, tile.faceVectors[f][0].y);
+						ctxd.lineTo(tile.faceVectors[f][1].x, tile.faceVectors[f][1].y);
+						ctxd.stroke();
+					}	
 				}
 			}
 		}
 	}
+	ctxd.lineWidth = 1;
 }
 function isWalkable(tileFlags) {
 	return (tileFlags & TILE_FLAGS_WALKABLE) == TILE_FLAGS_WALKABLE;
@@ -476,7 +504,7 @@ function debugAnimateBars(now) {
 
 for(var x = 0; x < WORLD_STRIDE; x++){
 		for(var y = 0; y < WORLD_STRIDE; y++){
-			world[x+y*WORLD_STRIDE].brightness = ~~(Math.cos(x*0.6+now*0.002)*Math.sin(y*0.6+now*0.001) * 128 + 128);
+		//	world[x+y*WORLD_STRIDE].brightness = ~~(Math.cos(x*0.6+now*0.002)*Math.sin(y*0.6+now*0.001) * 128 + 128);
 		}
 	}
 

@@ -9,6 +9,8 @@ var GRID_SIZE = 64;
 var VIEWPORT_WIDTH = 240;
 var VIEWPORT_HEIGHT = 160;
 
+var FULL_SCREEN = true;
+
 // find the smallest power of two that can fit the viewport texture
 var bufferDimension = 1;
 while(bufferDimension < VIEWPORT_WIDTH){
@@ -267,26 +269,33 @@ function update(now) {
 	window.requestAnimationFrame(update);
 }
 
+function setCanvasWidth(width) {
+	var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
+	canvas.width = width;
+	canvas.height = ~~(canvas.width / aspect);
+	resizeViewport();
+}
 
 function resizeViewport() {
-	// @ifdef DEBUG
-	return;
-	// @endif
-	
+
 	var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
 	
-	canvas.width = window.innerWidth;
-	canvas.height = ~~(canvas.width / aspect);
+	if(FULL_SCREEN){
+		canvas.width = window.innerWidth;
+		canvas.height = ~~(canvas.width / aspect);
+	}
 	
 	initGL(canvas);
 }
 
 function initialize() {
 
-	imgTexture.src = "images/32tile-test.png";
+	imgTexture.src = "images/32tile.png";
+
+	initTextures();
 	generateMap();
 
-		resizeViewport();
+	resizeViewport();
 // @ifdef DEBUG
 	var aspect = VIEWPORT_WIDTH / VIEWPORT_HEIGHT;
 	canvas.width = 800;
@@ -297,7 +306,9 @@ function initialize() {
 // @endif
 	initInputEvents();
 
-	window.addEventListener("resize", resizeViewport);
+	window.addEventListener("resize", function() {
+		resizeViewport();
+	});
 
 	startTime = 0;
 	update(0);

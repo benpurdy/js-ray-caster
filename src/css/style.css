@@ -1,3 +1,12 @@
+*{
+	-webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
 body{
 	background: #202020;
 	margin: 0px;
@@ -21,8 +30,61 @@ canvas {
 	left:0px;
 	padding:10px;
 	font-family:monospace;
-	font-size:12px;
-	line-height:20px;
+	font-size:10px;
+	line-height:18px;
 	background:rgba(0,0,0,0.25);
 	display:none;
+	text-align:right;
 }
+
+#editor{
+	font-family:monospace;
+	font-size:10px;
+	line-height:18px;
+	position:fixed;
+	top:0px;
+	right:0px;
+	background:#202020;
+}
+
+#texturePicker{
+	position: absolute;
+	background: #101010;
+	border: 1px solid #808080;
+}
+#texturePicker *{
+	pointer-events: none;
+}
+
+#selectedTexture {
+	position: absolute;
+	background-color: rgba(255,255,0,0.4);
+	top: 0px;
+	left: 0px;
+	pointer-events: none;
+}
+
+.flagLabel{
+	width: 100px;
+	display: inline-block;
+}
+
+#faceOptions TR TD:nth-child(2) {
+  padding-right: 18px;
+}
+
+#faceOptions TR TD:nth-child(3) {
+  background-color:#000080;
+}
+
+#faceOptions TR TD:nth-child(4) {
+  background-color:#008000;
+}
+
+#faceOptions TR TD:nth-child(5) {
+  background-color:#800000;
+}
+
+#faceOptions TR TD:nth-child(6) {
+  background-color:#800080;
+}  
